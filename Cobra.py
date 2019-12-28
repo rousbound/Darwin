@@ -6,9 +6,9 @@ import pygame
 from Intelect import*
 
 
-vel = 20
 class cube(object):
-    def __init__(self,start,dirnx=1,dirny=0,color=(255,0,0)):
+    def __init__(self,start,dirnx=1,dirny=0,color=(255,0,0),VEL = 20):
+        self.VEL = VEL
         self.pos = start
         self.dirnx = 1
         self.dirny = 0
@@ -18,10 +18,10 @@ class cube(object):
     def move(self, dirnx, dirny):
         self.dirnx = dirnx
         self.dirny = dirny
-        self.pos = (self.pos[0] + self.dirnx*vel, self.pos[1] + self.dirny*vel)
+        self.pos = (self.pos[0] + self.dirnx*self.VEL, self.pos[1] + self.dirny*self.VEL)
 
     def draw(self, surface):
-        dis = vel
+        dis = self.VEL
         i = self.pos[0]
         j = self.pos[1]
         pygame.draw.rect(surface, self.color, (i,j, dis, dis))
@@ -30,21 +30,21 @@ class cube(object):
 
 
 class snake(object):
-    def __init__(self, color, pos):
-        self.body = []
-        self.turns = {}
-        self.color = color
-        self.head = cube(pos)
-        self.body.append(self.head)
-        self.dirnx = 0
-        self.dirny = 1
+    def __init__(self, color, pos, VEL):
+      self.VEL = VEL
+      self.body = []
+      self.turns = {}
+      self.color = color
+      self.head = cube(pos)
+      self.body.append(self.head)
+      self.dirnx = 0
+      self.dirny = 1
 
     def move(self,input):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
+
         left = self.dirny,-self.dirnx
         right= -self.dirny,self.dirnx
+
         if input == 0:
             self.dirnx,self.dirny = left
             self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
@@ -77,13 +77,13 @@ class snake(object):
         dx, dy = tail.dirnx, tail.dirny
 
         if dx == 1 and dy == 0:
-            self.body.append(cube((tail.pos[0]-vel,tail.pos[1])))
+            self.body.append(cube((tail.pos[0]-self.VEL,tail.pos[1])))
         elif dx == -1 and dy == 0:
-            self.body.append(cube((tail.pos[0]+vel,tail.pos[1])))
+            self.body.append(cube((tail.pos[0]+self.VEL,tail.pos[1])))
         elif dx == 0 and dy == 1:
-            self.body.append(cube((tail.pos[0],tail.pos[1]-vel)))
+            self.body.append(cube((tail.pos[0],tail.pos[1]-self.VEL)))
         elif dx == 0 and dy == -1:
-            self.body.append(cube((tail.pos[0],tail.pos[1]+vel)))
+            self.body.append(cube((tail.pos[0],tail.pos[1]+self.VEL)))
 
         self.body[-1].dirnx = dx
         self.body[-1].dirny = dy
@@ -98,19 +98,22 @@ class snake(object):
 
 class Game():
     def __init__(self,sizes,weights= None,tick = None, draw = False,delay=None):
-        self.width = 1000
-        vel = 20
-        self.rows = vel
-        self.win = pygame.display.set_mode((self.width, self.width))
-        self.s = snake((255,0,0), (self.width/2,self.width/2))
+        self.WIDTH = 1000
+        self.VEL = 20
+        self.win = pygame.display.set_mode((self.WIDTH, self.WIDTH))
+        self.rows = self.VEL
+
+        self.s = snake((255,0,0), (self.WIDTH/2,self.WIDTH/2),self.VEL)
         self.snack = cube(self.randomSnack(self.rows, self.s), color=(0,255,0))
-        self.flag = True
-        self.clock = pygame.time.Clock()
-        self.tick = tick
-        self.moves_left = 100
         self.network = Network(sizes,weights)
+
+        self.MOVES_LEFT = 100
+
         self.draw = draw
         self.delay = delay
+        self.clock = pygame.time.Clock()
+        self.tick = tick
+
         self.prev_mov = 0
         self.penalty = 0
         self.count_same_mov = 0
@@ -126,14 +129,14 @@ class Game():
 
     def angle_with_apple(self):
         apple_direction_vector = np.array(self.snack.pos) - np.array(self.s.head.pos)
-        snake_direction_vector = self.s.head.dirnx*vel,self.s.head.dirny*vel
+        snake_direction_vector = self.s.head.dirnx*self.VEL,self.s.head.dirny*self.VEL
 
         norm_of_apple_direction_vector = np.linalg.norm(apple_direction_vector)
         norm_of_snake_direction_vector = np.linalg.norm(snake_direction_vector)
         if norm_of_apple_direction_vector == 0:
-            norm_of_apple_direction_vector = vel
+            norm_of_apple_direction_vector = self.VEL
         if norm_of_snake_direction_vector == 0:
-            norm_of_snake_direction_vector = vel
+            norm_of_snake_direction_vector = self.VEL
 
         apple_direction_vector_normalized = apple_direction_vector / norm_of_apple_direction_vector
         snake_direction_vector_normalized = snake_direction_vector / norm_of_snake_direction_vector
@@ -145,7 +148,7 @@ class Game():
         return apple_direction_vector_normalized,snake_direction_vector_normalized
 
     def collision_with_boundaries(self,next_step):
-        if next_step[0] >= self.width or next_step[0] < 0 or next_step[1] >= self.width or next_step[1] <0:
+        if next_step[0] >= self.WIDTH or next_step[0] < 0 or next_step[1] >= self.WIDTH or next_step[1] <0:
             return 1
         else:
             return 0
@@ -160,7 +163,7 @@ class Game():
                 return 0
 
     def is_direction_blocked(self,direction):
-        next_step = (self.s.head.pos[0] + direction[0]*vel,self.s.head.pos[1] + direction[1]*vel)
+        next_step = (self.s.head.pos[0] + direction[0]*self.VEL,self.s.head.pos[1] + direction[1]*self.VEL)
         if self.collision_with_boundaries(next_step) == 1 or self.collision_with_self(next_step) == 1:
             return 1
         else:
@@ -186,8 +189,6 @@ class Game():
         inputs[6] = [norma_vec[1][0]]
         inputs[7] = [norma_vec[1][1]]
         output = self.network.feedforward(inputs)
-        #print("inputs:",inputs)
-        #print("ouputs:",output)
         return np.argmax(output)
 
 
@@ -201,10 +202,8 @@ class Game():
     def randomSnack(self,rows, item):
         positions = item.body
         while True:
-            x = random.randrange(0,self.width-vel,vel)
-            y = random.randrange(0,self.width-vel,vel)
-            #x = 32*4
-            #y = 32*3
+            x = random.randrange(0,self.WIDTH-self.VEL,self.VEL)
+            y = random.randrange(0,self.WIDTH-self.VEL,self.VEL)
             if len(list(filter(lambda z:z.pos == (x,y), positions))) > 0:
                 continue
             else:
@@ -212,8 +211,8 @@ class Game():
 
         return (x,y)
 
-    def return_score(self,penalty):
-        score = len(self.s.body)*5000 + penalty - self.penalty
+    def return_score(self,penaltyInput):
+        score = len(self.s.body)*5000 - penaltyInput - self.penalty - 1500/len(self.s.body)
         return score,len(self.s.body)
 
     def main(self):
@@ -222,31 +221,53 @@ class Game():
                 self.clock.tick(self.tick)
             if self.delay:
                 pygame.time.delay(self.delay)
-            self.moves_left -=1
+
+            self.MOVES_LEFT -=1
             move = self.handle_network_inputs()
+
+            # Repetitivity Penalty Control
             if move == self.prev_mov:
                 self.count_same_mov += 1
-            if self.count_same_mov >8:
+            if self.count_same_mov > 8:
                 self.penalty += 2
             self.prev_mov = move
+
             self.s.move(move)
+
+            # Food Eaten
             if self.s.body[0].pos == self.snack.pos:
                 self.s.addCube()
-                self.moves_left += 200
+                self.MOVES_LEFT += 200
                 self.snack = cube(self.randomSnack(self.rows, self.s), color=(0,255,0))
 
+
+            #Exit Conditions
+
+            # Collision with body Control
             for x in range(len(self.s.body)):
                 if self.s.body[x].pos in list(map(lambda z:z.pos,self.s.body[x+1:])):
                     return self.return_score(-150)
-            if (0 > self.s.head.pos[0]) or (self.s.head.pos[0]>self.width-vel) or (0 > self.s.head.pos[1]) or  (self.s.head.pos[1] > self.width-vel):
+
+            # Collision with map perimeter Control
+            if (0 > self.s.head.pos[0]) or (self.s.head.pos[0]>self.WIDTH-self.VEL) or (0 > self.s.head.pos[1]) or  (self.s.head.pos[1] > self.WIDTH-self.VEL):
                 return self.return_score(-150)
-            if self.moves_left <= 0:
+            
+            # Out of moves death penalty
+            if self.MOVES_LEFT <= 0:
                 return self.return_score(-10)
+
+      
+
+            # Rendering
             if self.draw == True:
                 self.redrawWindow(self.win)
 
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
 
 
 
-#g = Game([9,10,10,4],tick = 1,draw=True)
+
+#g = Game([9,10,10,4],tick = 1000, delay = 5,draw=True)
 #g.main()

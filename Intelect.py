@@ -10,9 +10,10 @@ class Network(object):
         #print("sizes:",self.sizes)
         if np.any(weights):
             self.weights = weights
-            #print("from weights")
+            print("from weights")
             self.shaped = self.decode_weights()
         else:
+            print("Generating random weights")
             self.weights = np.random.rand(self.get_total_weights())
             self.shaped = self.decode_weights()
 
