@@ -3,44 +3,54 @@ import numpy as np
 
 class Network(object):
 
+    # Resume of transformations
+    # sizes = [8,9,15,3]
+    # total_weight = 252 ( 8*9 + 9*15 + 15 * 3)
+    # sizePairs = [[9,8],[15,9],[3,15]]
+    # synapsesLayersCount = [72,125,45]
+    # synapsesLayersWeights = [72weights,125weights,45weights]
+    # neuronsSynapses = [[9,8weights],[15,9weights],[3,15weights]]
+
+  
     def __init__(self, sizes,weights = None,from_array = None):
         self.num_layers = len(sizes)
-        self.original_sizes = sizes
-        self.sizes = [[x,y] for (x,y) in zip(sizes[1:],sizes[:-1])]
-        #print("sizes:",self.sizes)
+        self.sizes = sizes
+        self.sizePairs = [[x,y] for (x,y) in zip(self.sizes[1:],self.sizes[:-1])]
+
         if np.any(weights):
             self.weights = weights
-            print("from weights")
-            self.shaped = self.decode_weights()
         else:
-            print("Generating random weights")
             self.weights = np.random.rand(self.get_total_weights())
-            self.shaped = self.decode_weights()
+        self.neuronsSynapses = self.decode_weights()
 
 
     def get_total_weights(self):
-        self.mult = [[x*y] for (x,y) in zip(self.original_sizes[1:],self.original_sizes[:-1])]
+        self.mult = [[x*y] for (x,y) in zip(self.sizes[1:],self.sizes[:-1])]
         self.total = 0
-        for i in self.mult:
-            self.total += i[0]
+        for mulResult in self.mult:
+            self.total += mulResult[0]
         return self.total
 
     def decode_weights(self):
-        self.unshaped = [x[0]*x[1] for x in self.sizes]
-        self.unshaped2 = []
-        for x in self.unshaped:
-            self.unshaped2.append(self.weights[:x])
-        self.shaped = []
-        for x,y in zip(self.unshaped2,self.sizes):
+        self.synapsesLayersCount = [x[0]*x[1] for x in self.sizePairs]
+        self.synapsesLayersWeights = []
+
+        for x in self.synapsesLayersCount:
+            length = len(self.synapsesLayersWeights)
+            self.synapsesLayersWeights.append(self.weights[length:length+x])
+        
+        neuronsSynapses = []
+        for x,y in zip(self.synapsesLayersWeights,self.sizePairs):
             a = x.reshape(y[0],y[1])
-            self.shaped.append(a)
-        return self.shaped
+            neuronsSynapses.append(a)
+        return neuronsSynapses
+
 
     def feedforward(self, a):
-        #print("shaped",self.final)
-        for w in self.shaped[:-1]:
+        # Feedforward except in the final layer
+        for w in self.neuronsSynapses[:-1]:
             a = np.tanh(np.matmul(w,a))
-        w = self.shaped[-1]
+        w = self.neuronsSynapses[-1]
         z = np.matmul(w,a)
         a = softmax(z)
         return a
@@ -52,5 +62,5 @@ def softmax(z):
 def sigmoid(z):
     return 1.0/(1.0+np.exp(-z))
 
-#net = Network([8,10,10,4])
+#net = Network([8,9,15,3])
 #net.decode_weights()

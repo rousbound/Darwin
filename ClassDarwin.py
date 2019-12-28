@@ -5,17 +5,18 @@ import threading
 
 class Darwin():
     def __init__(self):
-        pg.init()
-        self.OFFSPRING_NUM = 2000
-        self.GENERATIONS = 50 
+        pg.init()                  # Standard Build:
+        self.OFFSPRING_NUM = 10  #    2000
+        self.GENERATIONS = 200 
+        self.VIEW_GENERATIONS = 50
         self.GENERATION = 0
-        self.SIZES = [8,9,15,3]
-        self.NUM_PARENTS = 12
-        self.MUTATION_RATE = 25
+        self.SIZES = [8,5,5,3]    #   [8,9,15,3]
+        self.NUM_PARENTS = 5      #      12
+        self.MUTATION_RATE = 30   #      25
 
-        self.TICK_CPY = 1000
-        self.TICK = self.TICK_CPY
-        self.DELAY = None #5
+        self.TICK_COPY = 1000
+        self.TICK = None
+        self.DELAY = None 
         self.DRAW = False
 
         self.lInput = self.SIZES[0]
@@ -38,7 +39,6 @@ class Darwin():
         self.total = 0
         for mulResult in self.mult:
             self.total += mulResult[0]
-        print("Total Weights: ", self.total)
         return self.total
 
     def runCurrentGeneration(self,population):
@@ -113,10 +113,11 @@ class Darwin():
 
     def cross(self,parents,OFFSPRING_NUM):
         new_offspring = np.empty((OFFSPRING_NUM,parents.shape[1]))
+
         for k in range(OFFSPRING_NUM):
             while True:
-                p1 = random.randint(0,parents.shape[0] -1)
-                p2 = random.randint(0,parents.shape[0] -1)
+                p1 = random.randrange(parents.shape[0])
+                p2 = random.randrange(parents.shape[0])
                 if p1 != p2:
                     for j in range(self.new_population.shape[1]):
                         if random.uniform(0,1) < 0.5:
@@ -150,18 +151,18 @@ class Darwin():
 
         for self.GENERATION in range(self.GENERATIONS+1):
 
-            if self.GENERATION >= 10:
-              if self.GENERATION % 10 == 0:
+            if self.GENERATION >= self.VIEW_GENERATIONS:
+              if self.GENERATION % self.VIEW_GENERATIONS == 0:
                 self.DRAW = True
-                self.TICK = self.TICK_CPY
+                self.TICK = self.TICK_COPY
               else:
                 self.DRAW = False
                 self.TICK = None
             print("DRAW: ",self.DRAW)
 
-            scores,body_lengths = self.runCurrentGeneration(self.new_population)
+            ndaScores,ndaBody_lengths = self.runCurrentGeneration(self.new_population)
 
-            maximum_score,maximum_bodies,bestAncestorsIndexes = self.getMaximums(scores,body_lengths)
+            maximum_score,maximum_bodies,bestAncestorsIndexes = self.getMaximums(ndaScores,ndaBody_lengths)
 
             if self.GENERATION == self.GENERATIONS+1: # Exit loop without generating new offspring
                 break
@@ -170,6 +171,7 @@ class Darwin():
             print("Generation:",self.GENERATION)
             print("Bests scores of generation:",maximum_score)
             print("Best body_length of generation",maximum_bodies)
+            print("Mean body_length of generation",ndaBody_lengths.mean())
             print("-------------------------------------")
 
             ndaBestParents = self.copyParents(bestAncestorsIndexes)
