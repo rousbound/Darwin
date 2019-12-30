@@ -6,13 +6,13 @@ import threading
 class Darwin():
     def __init__(self):
         pg.init()                  # Standard Build:
-        self.OFFSPRING_NUM = 10  #    2000
+        self.OFFSPRING_NUM = 2000 #    2000
         self.GENERATIONS = 200 
         self.VIEW_GENERATIONS = 50
         self.GENERATION = 0
-        self.SIZES = [8,5,5,3]    #   [8,9,15,3]
-        self.NUM_PARENTS = 5      #      12
-        self.MUTATION_RATE = 30   #      25
+        self.SIZES = [8,9,15,3]    #   [8,9,15,3]
+        self.NUM_PARENTS = 1000      #      12
+        self.MUTATION_RATE = 25   #      25
 
         self.TICK_COPY = 1000
         self.TICK = None
