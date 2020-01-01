@@ -1,31 +1,48 @@
-from Cobra import *
+from NewCobra import *
 import random
 import pygame as pg
-import threading
+
+# Standard build
+# OFFSPRING_NUM = 2000
+# GENERATIONS = 200
+# SIZES = [8,9,15,3]
+# NUM_PARENTS = 100
+# MUTATION_RATE = 25
 
 class Darwin():
-    def __init__(self):
-        pg.init()                  # Standard Build:
-        self.OFFSPRING_NUM = 2000 #    2000
-        self.GENERATIONS = 200 
-        self.VIEW_GENERATIONS = 50
-        self.GENERATION = 0
-        self.SIZES = [8,9,15,3]    #   [8,9,15,3]
-        self.NUM_PARENTS = 1000      #      12
-        self.MUTATION_RATE = 25   #      25
+    def __init__(self,  
+                  offspring_num = 2000,
+                  generations = 200,
+                  view_generations = 50,
+                  sizes=[8,9,15,4], 
+                  num_parents = 1000,
+                  mutation_rate = 25,
+                  crossing_algorithm = "uniform",
+                  cluster_id = "Darwin 1",
+                  draw = False,
+                  tick = None):
 
-        self.TICK_COPY = 1000
-        self.TICK = None
+        pg.init()                
+        self.ID = cluster_id
+        self.OFFSPRING_NUM = offspring_num  
+        self.GENERATIONS = generations 
+        self.VIEW_GENERATIONS = view_generations
+        self.generation = 0
+        self.SIZES = sizes           
+        print(self.SIZES)
+        self.NUM_PARENTS = num_parents
+        self.MUTATION_RATE = mutation_rate   
+        self.CROSSOVER_ALGORITHM = crossing_algorithm
+
+        self.TICK_COPY = tick
+        self.TICK = tick
         self.DELAY = None 
-        self.DRAW = False
+        self.DRAW = draw
 
         self.lInput = self.SIZES[0]
-        self.lHidden = []
+        self.lHidden = self.SIZES[1:-1]
         self.lOutput = self.SIZES[-1]
   
-        for i,lHidden in enumerate(self.SIZES[1:-1]):
-            self.lHidden.append(lHidden)
-
         self.total_weights = self.get_total_weights()
         self.population_shape = (self.OFFSPRING_NUM,self.total_weights)
 
@@ -33,6 +50,7 @@ class Darwin():
                               (np.arange(-1,1,step = 0.01),
                                               size = self.population_shape,
                                            replace = True)
+
 
     def get_total_weights(self):
         self.mult = [[x*y] for (x,y) in zip(self.SIZES[1:],self.SIZES[:-1])]
@@ -45,7 +63,6 @@ class Darwin():
 
         scores = np.empty(self.OFFSPRING_NUM)
         bodies = np.empty(self.OFFSPRING_NUM)
-        print("DRAW INSIDE: ", self.DRAW)
         
 
         for i,weight in enumerate(self.new_population):
@@ -55,7 +72,7 @@ class Darwin():
                                    weights = weight, 
                                       tick = self.TICK, 
                                       draw = self.DRAW, 
-                                     delay = self.DELAY)
+                                  keyboard = True)
 
             score, body = snakeLifeSpan.main()
             scores[i] = score
@@ -111,21 +128,41 @@ class Darwin():
 
         return ndaParents
 
-    def cross(self,parents,OFFSPRING_NUM):
+    def uniformCrossover(self,parents,OFFSPRING_NUM):
         new_offspring = np.empty((OFFSPRING_NUM,parents.shape[1]))
 
-        for k in range(OFFSPRING_NUM):
+        for children in range(OFFSPRING_NUM):
             while True:
                 p1 = random.randrange(parents.shape[0])
                 p2 = random.randrange(parents.shape[0])
                 if p1 != p2:
-                    for j in range(self.new_population.shape[1]):
-                        if random.uniform(0,1) < 0.5:
-                            new_offspring[k,j] = parents[p1,j]
-                        else:
-                            new_offspring[k,j] = parents[p2,j]
-                    break
+                  for weight in range(self.new_population.shape[1]):
+                    if random.uniform(0,1) < 0.5:
+                        new_offspring[children,weight] = parents[p1,weight]
+                    else:
+                        new_offspring[children,weight] = parents[p2,weight]
+                  break
         return new_offspring
+
+
+    def singlePointCrossover(self,parents,OFFSPRING_NUM):
+        new_offspring = np.empty((OFFSPRING_NUM,parents.shape[1]))
+        for children in range(OFFSPRING_NUM):
+            while True:
+                p1 = random.randrange(parents.shape[0])
+                p2 = random.randrange(parents.shape[0])
+                if p1 != p2:
+                  pivotPoint = random.choice(range(self.new_population.shape[1]))
+                  new_offspring[children,:pivotPoint] = parents[p1,:pivotPoint] 
+                  new_offspring[children,pivotPoint:] = parents[p2,pivotPoint:] 
+                break
+        return new_offspring
+            
+    def crossoverHandler(self, choice, parents,OFFSPRING_NUM):
+        if choice == "uniform":
+          return self.uniformCrossover(parents,OFFSPRING_NUM)
+        elif choice == "singlepoint":
+          return self.singlePointCrossover(parents,OFFSPRING_NUM)
 
     def mutation(self,offspring_crossover):
   
@@ -147,46 +184,70 @@ class Darwin():
 
         return offspring_crossover
 
+
+    def statisticsFileHandler(self):
+        from datetime import datetime,date
+        current_time = datetime.now().strftime("%H:%M:%S")
+        today_date = date.today()
+        
+        arqFileName = "Gen test - " + str(today_date) + " - " + str(current_time) + ".csv"
+        arqFileNameInfo = "Gen test - " + str(today_date) + " - " + str(current_time) + " - info.txt"
+        
+      
+        genInfo = "Generations: %d\nSizes: %s\nOffspring Count: %d\nNumber of Parents: %d\nMutation rate: %d\n"%(self.GENERATIONS,str(self.SIZES),self.OFFSPRING_NUM,self.NUM_PARENTS,self.MUTATION_RATE)
+        print(genInfo)
+  
+        arq = open("GenTests/" + arqFileNameInfo, "w")
+        arq.write(genInfo)
+        arq.close()
+        self.arq = open("GenTests/" + arqFileName,"w")
+        self.arq.write("Generation, Best body lengths, Average body length\n")
+
     def main(self):
+        self.statisticsFileHandler()
 
-        for self.GENERATION in range(self.GENERATIONS+1):
+        for self.generation in range(self.GENERATIONS+1):
 
-            if self.GENERATION >= self.VIEW_GENERATIONS:
-              if self.GENERATION % self.VIEW_GENERATIONS == 0:
+            if self.generation >= self.VIEW_GENERATIONS:
+              if self.generation % self.VIEW_GENERATIONS == 0:
                 self.DRAW = True
                 self.TICK = self.TICK_COPY
               else:
                 self.DRAW = False
                 self.TICK = None
-            print("DRAW: ",self.DRAW)
+            else:
+              self.DRAW = False
+              self.TICK = self.TICK_COPY
 
             ndaScores,ndaBody_lengths = self.runCurrentGeneration(self.new_population)
 
-            maximum_score,maximum_bodies,bestAncestorsIndexes = self.getMaximums(ndaScores,ndaBody_lengths)
+            maximum_score,ndaMaximum_bodies,bestAncestorsIndexes = self.getMaximums(ndaScores,ndaBody_lengths)
 
-            if self.GENERATION == self.GENERATIONS+1: # Exit loop without generating new offspring
+            if self.generation == self.GENERATIONS+1: # Exit loop without generating new offspring
                 break
 
             print("--------------------------------------")
-            print("Generation:",self.GENERATION)
-            print("Bests scores of generation:",maximum_score)
-            print("Best body_length of generation",maximum_bodies)
+            print("Cluster: ", self.ID)
+            print("Generation:",self.generation)
+            #print("Bests scores of generation:",maximum_score)
+            print("Best body_length of generation",ndaMaximum_bodies)
             print("Mean body_length of generation",ndaBody_lengths.mean())
             print("-------------------------------------")
+            csvLine = "%d, %d, %f\n"%(self.generation,ndaMaximum_bodies.max(),ndaBody_lengths.mean())
+            self.arq.write(csvLine)
 
+            # Generate new offspring
             ndaBestParents = self.copyParents(bestAncestorsIndexes)
-
             OFFSPRING_NUM_MINUS_PARENTS = self.OFFSPRING_NUM - ndaBestParents.shape[0] #Gotta preserve the parents
-            
-            crossedNewOffspring = self.cross(ndaBestParents,OFFSPRING_NUM_MINUS_PARENTS)
-
+            crossedNewOffspring = self.crossoverHandler(self.CROSSOVER_ALGORITHM,ndaBestParents,OFFSPRING_NUM_MINUS_PARENTS)
             mutatedNewOffspring = self.mutation(crossedNewOffspring)
 
-            # First NUM_PARENTS indexes are parents, rest are the mutated and crossed NewOffspring
+            # Preserve the parents
             self.new_population[0:ndaBestParents.shape[0], :] = ndaBestParents
             self.new_population[ndaBestParents.shape[0]:,:] = mutatedNewOffspring
   
         self.returnOverallBest(bestAncestorsIndexes)
+        self.arq.close()
 
         
 
@@ -201,5 +262,3 @@ class Darwin():
 
 
 
-darwin = Darwin()
-darwin.main()

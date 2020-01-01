@@ -1,4 +1,4 @@
 #!/bin/bash
 
 
-smartPyDebug ClassDarwin.py 
+smartPyDebug Meta.py 

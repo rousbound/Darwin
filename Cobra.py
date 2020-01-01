@@ -3,12 +3,14 @@
 import math
 import random
 import pygame
+import sys
 from Intelect import*
 
+pygame.init()
 
 class cube(object):
-    def __init__(self,start,dirnx=1,dirny=0,color=(255,0,0),VEL = 20):
-        self.VEL = VEL
+    def __init__(self, start, dirnx=1, dirny=0, color=(255,0,0), VEL = 20):
+        self.BLOCK_SIZE = VEL
         self.pos = start
         self.dirnx = 1
         self.dirny = 0
@@ -18,10 +20,10 @@ class cube(object):
     def move(self, dirnx, dirny):
         self.dirnx = dirnx
         self.dirny = dirny
-        self.pos = (self.pos[0] + self.dirnx*self.VEL, self.pos[1] + self.dirny*self.VEL)
+        self.pos = (self.pos[0] + self.dirnx*self.BLOCK_SIZE, self.pos[1] + self.dirny*self.BLOCK_SIZE)
 
     def draw(self, surface):
-        dis = self.VEL
+        dis = self.BLOCK_SIZE
         i = self.pos[0]
         j = self.pos[1]
         pygame.draw.rect(surface, self.color, (i,j, dis, dis))
@@ -31,7 +33,7 @@ class cube(object):
 
 class snake(object):
     def __init__(self, color, pos, VEL):
-      self.VEL = VEL
+      self.BLOCK_SIZE = VEL
       self.body = []
       self.turns = {}
       self.color = color
@@ -77,13 +79,21 @@ class snake(object):
         dx, dy = tail.dirnx, tail.dirny
 
         if dx == 1 and dy == 0:
-            self.body.append(cube((tail.pos[0]-self.VEL,tail.pos[1])))
+            self.body.append(cube( 
+                              (tail.pos[0] - self.BLOCK_SIZE,
+                                tail.pos[1])))
         elif dx == -1 and dy == 0:
-            self.body.append(cube((tail.pos[0]+self.VEL,tail.pos[1])))
+            self.body.append(cube( 
+                              (tail.pos[0] + self.BLOCK_SIZE,
+                                tail.pos[1])))
         elif dx == 0 and dy == 1:
-            self.body.append(cube((tail.pos[0],tail.pos[1]-self.VEL)))
+            self.body.append(cube( 
+                              (tail.pos[0],
+                                tail.pos[1] - self.BLOCK_SIZE)))
         elif dx == 0 and dy == -1:
-            self.body.append(cube((tail.pos[0],tail.pos[1]+self.VEL)))
+            self.body.append(cube( 
+                              (tail.pos[0],
+                                tail.pos[1] + self.BLOCK_SIZE)))
 
         self.body[-1].dirnx = dx
         self.body[-1].dirny = dy
@@ -99,11 +109,11 @@ class snake(object):
 class Game():
     def __init__(self,sizes,weights= None,tick = None, draw = False,delay=None):
         self.WIDTH = 1000
-        self.VEL = 20
+        self.BLOCK_SIZE = 20
         self.win = pygame.display.set_mode((self.WIDTH, self.WIDTH))
-        self.rows = self.VEL
+        self.rows = self.BLOCK_SIZE
 
-        self.s = snake((255,0,0), (self.WIDTH/2,self.WIDTH/2),self.VEL)
+        self.s = snake((255,0,0), (self.WIDTH/2,self.WIDTH/2),self.BLOCK_SIZE)
         self.snack = cube(self.randomSnack(self.rows, self.s), color=(0,255,0))
         self.network = Network(sizes,weights)
 
@@ -118,53 +128,54 @@ class Game():
         self.penalty = 0
         self.count_same_mov = 0
 
-    def find_distance(self,tuple):
-        x = abs(tuple[0][0] - tuple[0][1])
-        y = abs(tuple[1][0] - tuple[1][1])
-        return (x,y)
-
-    def get_diagonal(self,t1,t2):
-        diagonal = math.sqrt(t1**2+t2**2)
-        return diagonal
-
     def angle_with_apple(self):
         apple_direction_vector = np.array(self.snack.pos) - np.array(self.s.head.pos)
-        snake_direction_vector = self.s.head.dirnx*self.VEL,self.s.head.dirny*self.VEL
+        snake_direction_vector = self.s.head.dirnx * self.BLOCK_SIZE, self.s.head.dirny * self.BLOCK_SIZE
 
         norm_of_apple_direction_vector = np.linalg.norm(apple_direction_vector)
         norm_of_snake_direction_vector = np.linalg.norm(snake_direction_vector)
-        if norm_of_apple_direction_vector == 0:
-            norm_of_apple_direction_vector = self.VEL
-        if norm_of_snake_direction_vector == 0:
-            norm_of_snake_direction_vector = self.VEL
 
-        apple_direction_vector_normalized = apple_direction_vector / norm_of_apple_direction_vector
-        snake_direction_vector_normalized = snake_direction_vector / norm_of_snake_direction_vector
-        angle = math.atan2(
-            apple_direction_vector_normalized[1] * snake_direction_vector_normalized[0] - apple_direction_vector_normalized[
-                0] * snake_direction_vector_normalized[1],
-            apple_direction_vector_normalized[1] * snake_direction_vector_normalized[1] + apple_direction_vector_normalized[
-                0] * snake_direction_vector_normalized[0]) / math.pi
+        if norm_of_apple_direction_vector == 0:
+            norm_of_apple_direction_vector = self.BLOCK_SIZE
+        if norm_of_snake_direction_vector == 0:
+            norm_of_snake_direction_vector = self.BLOCK_SIZE
+
+        apple_direction_vector_normalized
+           = apple_direction_vector / norm_of_apple_direction_vector
+
+        snake_direction_vector_normalized 
+           = snake_direction_vector / norm_of_snake_direction_vector
+                                                                                 
         return apple_direction_vector_normalized,snake_direction_vector_normalized
 
+
     def collision_with_boundaries(self,next_step):
-        if next_step[0] >= self.WIDTH or next_step[0] < 0 or next_step[1] >= self.WIDTH or next_step[1] <0:
+        if next_step[0] >= self.WIDTH or\
+           next_step[0] < 0           or\
+           next_step[1] >= self.WIDTH or\
+           next_step[1] <0:
+
             return 1
         else:
             return 0
 
     def collision_with_self(self,next_step):
         body_pos=[]
-        for el in self.s.body[1:]:
-            body_pos.append(el.pos)
-            if el.pos[0] == next_step[0] and el.pos[1] == next_step[1]:
+        for block in self.s.body[1:]:
+            body_pos.append(block.pos)
+            if block.pos[0] == next_step[0] and\
+               block.pos[1] == next_step[1]:
                 return 1
             else:
                 return 0
 
     def is_direction_blocked(self,direction):
-        next_step = (self.s.head.pos[0] + direction[0]*self.VEL,self.s.head.pos[1] + direction[1]*self.VEL)
-        if self.collision_with_boundaries(next_step) == 1 or self.collision_with_self(next_step) == 1:
+
+        next_step = (self.s.head.pos[0] + direction[0]*self.BLOCK_SIZE,\
+                     self.s.head.pos[1] + direction[1]*self.BLOCK_SIZE)
+
+        if self.collision_with_boundaries(next_step) == 1 or\
+           self.collision_with_self(next_step)       == 1:
             return 1
         else:
             return 0
@@ -179,15 +190,15 @@ class Game():
     def handle_network_inputs(self):
         inputs = [[0],[0],[0],[0],[0],[0],[0],[0]]
         fb,lb,rb,db = self.blocked_directions()
-        norma_vec = self.angle_with_apple()
+        apple_angle, snake_dir_angle = self.angle_with_apple()
         inputs[0] = [fb]
         inputs[1] = [lb]
         inputs[2] = [rb]
         inputs[3] = [db]
-        inputs[4] = [norma_vec[0][0]]
-        inputs[5] = [norma_vec[0][1]]
-        inputs[6] = [norma_vec[1][0]]
-        inputs[7] = [norma_vec[1][1]]
+        inputs[4] = [apple_angle[0]]
+        inputs[5] = [apple_angle[1]]
+        inputs[6] = [snake_dir_angle[0]]
+        inputs[7] = [snake_dir_angle[1]]
         output = self.network.feedforward(inputs)
         return np.argmax(output)
 
@@ -202,9 +213,16 @@ class Game():
     def randomSnack(self,rows, item):
         positions = item.body
         while True:
-            x = random.randrange(0,self.WIDTH-self.VEL,self.VEL)
-            y = random.randrange(0,self.WIDTH-self.VEL,self.VEL)
-            if len(list(filter(lambda z:z.pos == (x,y), positions))) > 0:
+            x = random.randrange(0,
+                                  self.WIDTH - self.BLOCK_SIZE,
+                                    self.BLOCK_SIZE)
+            y = random.randrange(0,
+                                  self.WIDTH - self.BLOCK_SIZE,
+                                    self.BLOCK_SIZE)
+            if len(
+                  list(
+                    filter(
+                      lambda z : z.pos == (x,y) , positions ))) > 0:
                 continue
             else:
                 break
@@ -212,7 +230,10 @@ class Game():
         return (x,y)
 
     def return_score(self,penaltyInput):
-        score = len(self.s.body)*5000 - penaltyInput - self.penalty - 1500/len(self.s.body)
+        score = len(self.s.body)*5000 -\
+                 penaltyInput -\
+                self.penalty -\
+                 1500/len(self.s.body)
         return score,len(self.s.body)
 
     def main(self):
@@ -249,14 +270,15 @@ class Game():
                     return self.return_score(-150)
 
             # Collision with map perimeter Control
-            if (0 > self.s.head.pos[0]) or (self.s.head.pos[0]>self.WIDTH-self.VEL) or (0 > self.s.head.pos[1]) or  (self.s.head.pos[1] > self.WIDTH-self.VEL):
+            if (0 > self.s.head.pos[0])                               or\
+                 (self.s.head.pos[0] > self.WIDTH-self.BLOCK_SIZE)    or\
+               (0 > self.s.head.pos[1])                               or\
+                 (self.s.head.pos[1] > self.WIDTH-self.BLOCK_SIZE):
                 return self.return_score(-150)
             
             # Out of moves death penalty
             if self.MOVES_LEFT <= 0:
                 return self.return_score(-10)
-
-      
 
             # Rendering
             if self.draw == True:
@@ -265,6 +287,7 @@ class Game():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                    sys.exit(0)
 
 
 

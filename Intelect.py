@@ -16,6 +16,7 @@ class Network(object):
         self.num_layers = len(sizes)
         self.sizes = sizes
         self.sizePairs = [[x,y] for (x,y) in zip(self.sizes[1:],self.sizes[:-1])]
+        #print(self.sizePairs)
 
         if np.any(weights):
             self.weights = weights

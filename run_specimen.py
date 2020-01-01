@@ -3,6 +3,7 @@ from Cobra import *
 
 
 best = np.load('best weights.npy')
+print("saving out:",best)
 print(best.shape)
 for n,i in enumerate(best):
     print("specimen %d"%n)
