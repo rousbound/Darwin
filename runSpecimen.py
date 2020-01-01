@@ -1,8 +1,9 @@
-from Cobra import *
+from NewCobra import *
+import sys
 
 
 
-best = np.load('best weights.npy')
+best = np.load(sys.argv[1])
 print("saving out:",best)
 print(best.shape)
 for n,i in enumerate(best):

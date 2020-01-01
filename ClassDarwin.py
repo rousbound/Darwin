@@ -20,7 +20,10 @@ class Darwin():
                   crossing_algorithm = "uniform",
                   cluster_id = "Darwin 1",
                   draw = False,
-                  tick = None):
+                  tick = None,
+                  saving_csv = False,
+                  saving_txt = False,
+                  saving_dna = False):
 
         pg.init()                
         self.ID = cluster_id
@@ -38,6 +41,10 @@ class Darwin():
         self.TICK = tick
         self.DELAY = None 
         self.DRAW = draw
+
+        self.SAVING_CSV = saving_csv
+        self.SAVING_TXT = saving_txt
+        self.SAVING_DNA = saving_dna
 
         self.lInput = self.SIZES[0]
         self.lHidden = self.SIZES[1:-1]
@@ -190,18 +197,28 @@ class Darwin():
         current_time = datetime.now().strftime("%H:%M:%S")
         today_date = date.today()
         
-        arqFileName = "Gen test - " + str(today_date) + " - " + str(current_time) + ".csv"
-        arqFileNameInfo = "Gen test - " + str(today_date) + " - " + str(current_time) + " - info.txt"
+        self.infoHeader = "Gen test - " + str(today_date) + " - " + str(current_time)
+        self.folder = "GenTests/"
+        
+        arqFileName = self.infoHeader + ".csv"
+        arqFileNameInfo = self.infoHeader + " - info.txt"
         
       
-        genInfo = "Generations: %d\nSizes: %s\nOffspring Count: %d\nNumber of Parents: %d\nMutation rate: %d\n"%(self.GENERATIONS,str(self.SIZES),self.OFFSPRING_NUM,self.NUM_PARENTS,self.MUTATION_RATE)
+        genInfo = "Generations: %d\n"        %     self.GENERATIONS     + \
+                   "Sizes: %s\n"             %     str(self.SIZES)      + \
+                   "Offspring Count: %d\n"   %     self.OFFSPRING_NUM   + \
+                   "Number of Parents: %d\n" %     self.NUM_PARENTS     + \
+                   "Mutation rate: %d\n"     %      self.MUTATION_RATE 
+
         print(genInfo)
   
-        arq = open("GenTests/" + arqFileNameInfo, "w")
-        arq.write(genInfo)
-        arq.close()
-        self.arq = open("GenTests/" + arqFileName,"w")
-        self.arq.write("Generation, Best body lengths, Average body length\n")
+        if self.SAVING_TXT:
+          arq = open(self.folder + arqFileNameInfo, "w")
+          arq.write(genInfo)
+          arq.close()
+        if self.SAVING_CSV:
+          self.arq = open(self.folder + arqFileName,"w")
+          self.arq.write("Generation, Best body lengths, Average body length\n")
 
     def main(self):
         self.statisticsFileHandler()
@@ -233,8 +250,10 @@ class Darwin():
             print("Best body_length of generation",ndaMaximum_bodies)
             print("Mean body_length of generation",ndaBody_lengths.mean())
             print("-------------------------------------")
-            csvLine = "%d, %d, %f\n"%(self.generation,ndaMaximum_bodies.max(),ndaBody_lengths.mean())
-            self.arq.write(csvLine)
+      
+            if self.SAVING_CSV:
+              csvLine = "%d, %d, %f\n"%(self.generation,ndaMaximum_bodies.max(),ndaBody_lengths.mean())
+              self.arq.write(csvLine)
 
             # Generate new offspring
             ndaBestParents = self.copyParents(bestAncestorsIndexes)
@@ -246,17 +265,21 @@ class Darwin():
             self.new_population[0:ndaBestParents.shape[0], :] = ndaBestParents
             self.new_population[ndaBestParents.shape[0]:,:] = mutatedNewOffspring
   
-        self.returnOverallBest(bestAncestorsIndexes)
-        self.arq.close()
+        if self.SAVING_DNA:
+          self.returnOverallBest(bestAncestorsIndexes)
+        if self.SAVING_CSV:
+          self.arq.close()
 
         
 
     def returnOverallBest(self,bestIndexes):
-        best = []
-        for i in bestIndexes:
-            best.append(self.new_population[i])
+        best = np.zeros((self.NUM_PARENTS,self.total_weights))
+        for i,bestIndex in enumerate(bestIndexes):
+            best[i] = self.new_population[bestIndex]
+        print(best)
         print("Saving Weights")
-        np.save('best weights.npy',best)
+        print(best.shape)
+        np.save(self.folder + self.infoHeader + '.npy',best)
 
 
 

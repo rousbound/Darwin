@@ -1,16 +1,19 @@
 from ClassDarwin import Darwin
 
 
-darwin = Darwin(offspring_num = 200,
-                  generations = 100,
-                  view_generations = 30,
+darwin = Darwin(offspring_num = 100,
+                  generations = 50,
+                  view_generations = 1000,
                   sizes=[8,9,15,4],
-                  num_parents = 15,
-                  mutation_rate = 25,
+                  num_parents = 12,
+                  mutation_rate = 5,
                   crossing_algorithm = "uniform",
                   cluster_id = "Darwin 1",
-                  draw = True,
-                  tick = 100)  
+                  draw = False,
+                  tick = 100,
+                  saving_txt = True,
+                  saving_csv = True,
+                  saving_dna = True)  
 
 """darwin2 = Darwin(offspring_num = 200,
                   generations = 100,

@@ -1,296 +1,265 @@
-#Snake Tutorial Python
-
-import math
-import random
 import pygame
 import sys
-from Intelect import*
-
-pygame.init()
-
-class cube(object):
-    def __init__(self, start, dirnx=1, dirny=0, color=(255,0,0), VEL = 20):
-        self.BLOCK_SIZE = VEL
-        self.pos = start
-        self.dirnx = 1
-        self.dirny = 0
-        self.color = color
+import random
+import numpy as np
+from Intelect import *
 
 
-    def move(self, dirnx, dirny):
-        self.dirnx = dirnx
-        self.dirny = dirny
-        self.pos = (self.pos[0] + self.dirnx*self.BLOCK_SIZE, self.pos[1] + self.dirny*self.BLOCK_SIZE)
-
-    def draw(self, surface):
-        dis = self.BLOCK_SIZE
-        i = self.pos[0]
-        j = self.pos[1]
-        pygame.draw.rect(surface, self.color, (i,j, dis, dis))
+vec = pygame.Vector2
+WIDTH = 200
+BLOCK_SIZE = 20
+ROWS = WIDTH/BLOCK_SIZE
+COLS = ROWS
+EXTRA_MOVES = 200
+MOVES_LEFT = 100
 
 
+def keyboardControl(snake):
+  keys = pygame.key.get_pressed()
+  if keys[pygame.K_UP] and (snake.dir != 'down'):
+    snake.dir = 'up'
+  if keys[pygame.K_DOWN] and (snake.dir != 'up'):
+    snake.dir = 'down'
+  if keys[pygame.K_LEFT] and (snake.dir != 'right'):
+    snake.dir = 'left'
+  if keys[pygame.K_RIGHT] and (snake.dir != 'left'):
+    snake.dir = 'right'
 
+class Snake():
+  def __init__(self,pos):
+    self.dir = 'right' 
+    self.body = [pos]
+    self.color = (255,0,0)
+    self.step = BLOCK_SIZE
+    self.vel = vec(0,0)
+    self.ub = False
+    self.lb = False
+    self.rb = False
+    self.db = False
+    self.selfCollided = False
 
-class snake(object):
-    def __init__(self, color, pos, VEL):
-      self.BLOCK_SIZE = VEL
-      self.body = []
-      self.turns = {}
-      self.color = color
-      self.head = cube(pos)
-      self.body.append(self.head)
-      self.dirnx = 0
-      self.dirny = 1
+  def selfCollision(self, member):
+    if self.body[0] == member:
+      self.selfCollided =  True
 
-    def move(self,input):
+  def bodyBackPropagation(self, i):
+    self.body[i].x = self.body[i-1].x
+    self.body[i].y = self.body[i-1].y
+  
+  def dirControl(self):
+    if self.dir == 'right':
+      self.body[0].x += self.step
+      self.vel = vec(self.step,0)
+    if self.dir == 'left':
+      self.body[0].x -= self.step
+      self.vel = vec(-self.step, 0)
+    if self.dir == 'up':
+      self.body[0].y -= self.step
+      self.vel = vec(0, -self.step)
+    if self.dir == 'down':
+      self.body[0].y += self.step
+      self.vel = vec(0, self.step)
 
-        left = self.dirny,-self.dirnx
-        right= -self.dirny,self.dirnx
+  def debug(self):
+    #print("Head pos:", self.body[0])
+    #print('Up:%s, Right:%s, Left:%s, Down: %s'%(self.ub,self.rb,self.lb,self.db))
+    pass
+  
+  def draw(self, surface):
+    for member in self.body:
+      pygame.draw.rect(surface, self.color,
+                                  (member.x,
+                                   member.y,
+                                   BLOCK_SIZE,
+                                   BLOCK_SIZE))
+  
+  
+  def foodCollision(self, game, snack):
+    if self.body[0] == snack.pos:
+      self.body.insert(0,vec(self.body[0]))
+      snack.spawn(self)
+      game.MOVES_LEFT += game.EXTRA_MOVES
+  
+    
+  
+  def neuralNetworkMove(self,input):
+    if input == 0 and (self.dir != 'down'):
+      self.dir = 'up'
+    if input == 1 and (self.dir != 'up'):
+      self.dir = 'down'
+    if input == 2 and (self.dir != 'right'):
+      self.dir = 'left'
+    if input == 3 and (self.dir != 'left'):
+        self.dir = 'right'
 
-        if input == 0:
-            self.dirnx,self.dirny = left
-            self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
+  def update(self, game, surface, snack):
+    for i,member in enumerate(self.body):
+      if i > 0:
+        self.bodyBackPropagation(len(self.body)-i)
+      if i >= 3:
+        self.selfCollision(member)
+    self.dirControl()
+    self.debug()
+    self.foodCollision(game,snack)
 
-        elif input == 1:
-            self.dirnx,self.dirny = self.dirnx,self.dirny
-            self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
+class Food():
+  def __init__(self):
+    self.pos = vec(0,0)
+    self.color = (0,255,0)
 
-        elif input == 2:
-            self.dirnx,self.dirny = right
-            self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
+  def spawn(self,snake):
+    while True:
+      x = random.randint(0,(ROWS-1))*BLOCK_SIZE
+      y = random.randint(0,(COLS-1))*BLOCK_SIZE
+      if len(list(filter(lambda z : z == vec(x,y), snake.body))) > 0:
+        continue
+      else:
+        break
+    self.pos = vec(x,y)      
 
-
-        for i, c in enumerate(self.body):
-            p = c.pos[:]
-            if p in self.turns:
-                turn = self.turns[p]
-                c.move(turn[0],turn[1])
-                if i == len(self.body)-1:
-                    self.turns.pop(p)
-            else:
-                c.move(c.dirnx,c.dirny)
-
-
-
-
-
-    def addCube(self):
-        tail = self.body[-1]
-        dx, dy = tail.dirnx, tail.dirny
-
-        if dx == 1 and dy == 0:
-            self.body.append(cube( 
-                              (tail.pos[0] - self.BLOCK_SIZE,
-                                tail.pos[1])))
-        elif dx == -1 and dy == 0:
-            self.body.append(cube( 
-                              (tail.pos[0] + self.BLOCK_SIZE,
-                                tail.pos[1])))
-        elif dx == 0 and dy == 1:
-            self.body.append(cube( 
-                              (tail.pos[0],
-                                tail.pos[1] - self.BLOCK_SIZE)))
-        elif dx == 0 and dy == -1:
-            self.body.append(cube( 
-                              (tail.pos[0],
-                                tail.pos[1] + self.BLOCK_SIZE)))
-
-        self.body[-1].dirnx = dx
-        self.body[-1].dirny = dy
-
-
-    def draw_s(self, surface):
-        for c in self.body:
-            c.draw(surface)
-
-
-
+      
+  
+  def draw(self, surface):
+        pygame.draw.rect(surface, self.color,
+                                (self.pos.x,
+                                 self.pos.y,
+                                 BLOCK_SIZE,
+                                 BLOCK_SIZE))
+    
 
 class Game():
-    def __init__(self,sizes,weights= None,tick = None, draw = False,delay=None):
-        self.WIDTH = 1000
-        self.BLOCK_SIZE = 20
-        self.win = pygame.display.set_mode((self.WIDTH, self.WIDTH))
-        self.rows = self.BLOCK_SIZE
+  def __init__(self,sizes = None, weights = None, tick = None, draw = False, keyboard = False):
+    self.win = pygame.display.set_mode((WIDTH, WIDTH))
+    self.clock = pygame.time.Clock()
+    self.KEYBOARD = keyboard
 
-        self.s = snake((255,0,0), (self.WIDTH/2,self.WIDTH/2),self.BLOCK_SIZE)
-        self.snack = cube(self.randomSnack(self.rows, self.s), color=(0,255,0))
-        self.network = Network(sizes,weights)
+    self.TICK = tick 
+    self.DRAW = draw
+    self.SIZES = sizes
+    
+    if self.SIZES:
+      self.network = Network(sizes,weights)
+    self.MOVES_LEFT = MOVES_LEFT
+    self.EXTRA_MOVES = EXTRA_MOVES
 
-        self.MOVES_LEFT = 100
+    self.s = Snake(vec(WIDTH/2,WIDTH/2))
+    self.snack = Food()
+    self.snack.spawn(self.s)
+    
+  
+  def events(self):
+     for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit(0)
 
-        self.draw = draw
-        self.delay = delay
-        self.clock = pygame.time.Clock()
-        self.tick = tick
-
-        self.prev_mov = 0
-        self.penalty = 0
-        self.count_same_mov = 0
-
-    def angle_with_apple(self):
-        apple_direction_vector = np.array(self.snack.pos) - np.array(self.s.head.pos)
-        snake_direction_vector = self.s.head.dirnx * self.BLOCK_SIZE, self.s.head.dirny * self.BLOCK_SIZE
-
-        norm_of_apple_direction_vector = np.linalg.norm(apple_direction_vector)
-        norm_of_snake_direction_vector = np.linalg.norm(snake_direction_vector)
-
-        if norm_of_apple_direction_vector == 0:
-            norm_of_apple_direction_vector = self.BLOCK_SIZE
-        if norm_of_snake_direction_vector == 0:
-            norm_of_snake_direction_vector = self.BLOCK_SIZE
-
-        apple_direction_vector_normalized
-           = apple_direction_vector / norm_of_apple_direction_vector
-
-        snake_direction_vector_normalized 
-           = snake_direction_vector / norm_of_snake_direction_vector
-                                                                                 
-        return apple_direction_vector_normalized,snake_direction_vector_normalized
-
-
-    def collision_with_boundaries(self,next_step):
-        if next_step[0] >= self.WIDTH or\
-           next_step[0] < 0           or\
-           next_step[1] >= self.WIDTH or\
-           next_step[1] <0:
-
-            return 1
-        else:
-            return 0
-
-    def collision_with_self(self,next_step):
-        body_pos=[]
-        for block in self.s.body[1:]:
-            body_pos.append(block.pos)
-            if block.pos[0] == next_step[0] and\
-               block.pos[1] == next_step[1]:
-                return 1
-            else:
-                return 0
-
-    def is_direction_blocked(self,direction):
-
-        next_step = (self.s.head.pos[0] + direction[0]*self.BLOCK_SIZE,\
-                     self.s.head.pos[1] + direction[1]*self.BLOCK_SIZE)
-
-        if self.collision_with_boundaries(next_step) == 1 or\
-           self.collision_with_self(next_step)       == 1:
-            return 1
-        else:
-            return 0
-
-    def blocked_directions(self):
-        front_blocked = self.is_direction_blocked((0,-1))
-        left_blocked = self.is_direction_blocked((-1,0))
-        right_blocked = self.is_direction_blocked((1,0))
-        down_blocked = self.is_direction_blocked((0,1))
-        return front_blocked,left_blocked,right_blocked,down_blocked
-
-    def handle_network_inputs(self):
-        inputs = [[0],[0],[0],[0],[0],[0],[0],[0]]
-        fb,lb,rb,db = self.blocked_directions()
-        apple_angle, snake_dir_angle = self.angle_with_apple()
-        inputs[0] = [fb]
-        inputs[1] = [lb]
-        inputs[2] = [rb]
-        inputs[3] = [db]
-        inputs[4] = [apple_angle[0]]
-        inputs[5] = [apple_angle[1]]
-        inputs[6] = [snake_dir_angle[0]]
-        inputs[7] = [snake_dir_angle[1]]
-        output = self.network.feedforward(inputs)
-        return np.argmax(output)
-
-
-    def redrawWindow(self,surface):
-        surface.fill((0,0,0))
-        self.snack.draw(surface)
-        self.s.draw_s(surface)
-        pygame.display.update()
-
-
-    def randomSnack(self,rows, item):
-        positions = item.body
-        while True:
-            x = random.randrange(0,
-                                  self.WIDTH - self.BLOCK_SIZE,
-                                    self.BLOCK_SIZE)
-            y = random.randrange(0,
-                                  self.WIDTH - self.BLOCK_SIZE,
-                                    self.BLOCK_SIZE)
-            if len(
-                  list(
-                    filter(
-                      lambda z : z.pos == (x,y) , positions ))) > 0:
-                continue
-            else:
-                break
-
-        return (x,y)
-
-    def return_score(self,penaltyInput):
-        score = len(self.s.body)*5000 -\
-                 penaltyInput -\
-                self.penalty -\
-                 1500/len(self.s.body)
-        return score,len(self.s.body)
-
-    def main(self):
-        while True:
-            if self.tick:
-                self.clock.tick(self.tick)
-            if self.delay:
-                pygame.time.delay(self.delay)
-
-            self.MOVES_LEFT -=1
-            move = self.handle_network_inputs()
-
-            # Repetitivity Penalty Control
-            if move == self.prev_mov:
-                self.count_same_mov += 1
-            if self.count_same_mov > 8:
-                self.penalty += 2
-            self.prev_mov = move
-
-            self.s.move(move)
-
-            # Food Eaten
-            if self.s.body[0].pos == self.snack.pos:
-                self.s.addCube()
-                self.MOVES_LEFT += 200
-                self.snack = cube(self.randomSnack(self.rows, self.s), color=(0,255,0))
-
-
-            #Exit Conditions
-
-            # Collision with body Control
-            for x in range(len(self.s.body)):
-                if self.s.body[x].pos in list(map(lambda z:z.pos,self.s.body[x+1:])):
-                    return self.return_score(-150)
-
-            # Collision with map perimeter Control
-            if (0 > self.s.head.pos[0])                               or\
-                 (self.s.head.pos[0] > self.WIDTH-self.BLOCK_SIZE)    or\
-               (0 > self.s.head.pos[1])                               or\
-                 (self.s.head.pos[1] > self.WIDTH-self.BLOCK_SIZE):
-                return self.return_score(-150)
-            
-            # Out of moves death penalty
-            if self.MOVES_LEFT <= 0:
-                return self.return_score(-10)
-
-            # Rendering
-            if self.draw == True:
-                self.redrawWindow(self.win)
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit(0)
+  def draw(self):
+    self.win.fill((0,0,0))
+    self.s.draw(self.win)
+    self.snack.draw(self.win)
+    pygame.display.update()
 
 
 
+  def wallCollision(self):
+    if self.s.body[0].x > WIDTH-BLOCK_SIZE or \
+    self.s.body[0].x < 0                   or \
+    self.s.body[0].y > WIDTH-BLOCK_SIZE    or \
+    self.s.body[0].y < 0:
+      #print("Wall collision!")
+      return True
 
-#g = Game([9,10,10,4],tick = 1000, delay = 5,draw=True)
-#g.main()
+
+  def angle_with_apple(self):
+    snack_pos = (self.snack.pos.x,self.snack.pos.y)
+    body_pos = (self.s.body[0].x,self.s.body[0].y)
+    apple_direction_vector = np.array(snack_pos) - np.array(body_pos)
+    snake_direction_vector = self.s.vel.x , self.s.vel.y 
+
+    norm_of_apple_direction_vector = np.linalg.norm(apple_direction_vector)
+    norm_of_snake_direction_vector = np.linalg.norm(snake_direction_vector)
+
+    if norm_of_apple_direction_vector == 0:
+        norm_of_apple_direction_vector = BLOCK_SIZE
+    if norm_of_snake_direction_vector == 0:
+        norm_of_snake_direction_vector = BLOCK_SIZE
+
+    apple_direction_vector_normalized\
+       = apple_direction_vector / norm_of_apple_direction_vector
+
+    snake_direction_vector_normalized\
+       = snake_direction_vector / norm_of_snake_direction_vector
+
+    return apple_direction_vector_normalized,snake_direction_vector_normalized
+
+  def isDirectionBlocked(self, direction):
+    adjacentStep = self.s.body[0] + direction
+    if adjacentStep in self.s.body:
+      return 1
+    else:
+      if adjacentStep.x > WIDTH-BLOCK_SIZE:
+        return 1
+      if adjacentStep.x < 0:
+        return 1
+      if adjacentStep.y > WIDTH-BLOCK_SIZE:
+        return 1
+      if adjacentStep.y < 0:
+        return 1
+      return 0
+
+     
+
+  def blockedDirections(self):
+    ub = self.isDirectionBlocked(vec(0,-BLOCK_SIZE))
+    lb = self.isDirectionBlocked(vec(-BLOCK_SIZE,0))
+    rb = self.isDirectionBlocked(vec(BLOCK_SIZE,0))
+    db = self.isDirectionBlocked(vec(0,BLOCK_SIZE))
+    return ub,lb,rb,db
+
+  def handle_network_inputs(self):
+    inputs = [[0],[0],[0],[0],[0],[0],[0],[0]]
+    self.s.ub, self.s.lb, self.s.rb, self.s.db = self.blockedDirections()
+    apple_angle, snake_dir_angle = self.angle_with_apple()
+    inputs[0] = [self.s.ub]
+    inputs[1] = [self.s.lb]
+    inputs[2] = [self.s.rb]
+    inputs[3] = [self.s.db]
+    inputs[4] = [apple_angle[0]]
+    inputs[5] = [apple_angle[1]]
+    inputs[6] = [snake_dir_angle[0]]
+    inputs[7] = [snake_dir_angle[1]]
+    output = self.network.feedforward(inputs)
+    return np.argmax(output)
+
+  def gameOver(self,penaltyInput):
+    score = len(self.s.body)*5000 - \
+              penaltyInput - \
+              1500/len(self.s.body)
+    return score, len(self.s.body)
+
+
+  def main(self):
+    while True:
+      if self.TICK:
+        self.clock.tick(self.TICK)
+      self.events()
+      self.s.update(self,self.win,self.snack)
+      if self.DRAW: 
+        self.draw()
+      if self.KEYBOARD:
+        keyboardControl(self.s)
+      if self.MOVES_LEFT <= 0:
+        return self.gameOver(-10)
+      if self.s.selfCollided:
+        return self.gameOver(-150)
+      if self.wallCollision():
+        return self.gameOver(-150)
+      self.MOVES_LEFT -= 1
+      #self.s.ub, self.s.lb, self.s.rb, self.s.db = self.blockedDirections()
+      
+      if self.SIZES:
+        output = self.handle_network_inputs()
+        self.s.neuralNetworkMove(output)
+  
+  
+
