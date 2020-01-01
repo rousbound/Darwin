@@ -172,8 +172,8 @@ class Darwin():
 
             for _ in range(self.MUTATION_RATE):
 
-                random_weight_index = random.randrange(size_y) # Returns between 0 and size_y-1
-
+                # Returns between 0 and size_y-1
+                random_weight_index = random.randrange(size_y) 
                 ndaRandom_weight          =           np.random.choice\
                             (np.arange(-1,1,step = 0.001),
                                             size = (1), 
@@ -219,15 +219,13 @@ class Darwin():
 
     def main(self):
         self.statisticsFileHandler()
-        #atexit.register(self.returnOverallBest)
 
         for self.generation in range(self.GENERATIONS+1):
 
             ndaScores,ndaBody_lengths = self.runCurrentGeneration(self.new_population)
 
             maximum_score,ndaMaximum_bodies,self.bestAncestorsIndexes = self.getMaximums(ndaScores,ndaBody_lengths)
-
-            if self.generation == self.GENERATIONS+1: # Exit loop without generating new offspring
+            if self.generation == self.GENERATIONS+1: 
                 break
 
             print("--------------------------------------")
@@ -245,7 +243,11 @@ class Darwin():
             # Generate new offspring
             ndaBestParents = self.copyParents(self.bestAncestorsIndexes)
             OFFSPRING_NUM_MINUS_PARENTS = self.OFFSPRING_NUM - ndaBestParents.shape[0] #Gotta preserve the parents
-            crossedNewOffspring = self.crossoverHandler(self.CROSSOVER_ALGORITHM,ndaBestParents,OFFSPRING_NUM_MINUS_PARENTS)
+            crossedNewOffspring = self.crossoverHandler\
+                                    (self.CROSSOVER_ALGORITHM, \
+                                    ndaBestParents,            \
+                                    OFFSPRING_NUM_MINUS_PARENTS)
+            # Exit loop 
             mutatedNewOffspring = self.mutation(crossedNewOffspring)
 
             # Preserve the parents
@@ -264,9 +266,7 @@ class Darwin():
         best = np.zeros((self.NUM_PARENTS,self.total_weights))
         for i,bestIndex in enumerate(bestIndexes):
             best[i] = self.new_population[bestIndex]
-        print(best)
         print("Saving Weights")
-        print(best.shape)
         np.save(self.folder + self.infoHeader + '.npy',best)
 
 

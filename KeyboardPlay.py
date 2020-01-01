@@ -1,8 +1,8 @@
-from NewCobra import *
+from Cobra import *
 
 game = Game(sizes = None,
             weights = None,
-            tick = 10,
+            tick = 8,
             draw = True,
             keyboard = True)
 

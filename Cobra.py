@@ -32,9 +32,10 @@ class Snake():
     self.db = False
     self.selfCollided = False
 
-  def selfCollision(self, member):
-    if self.body[0] == member:
-      self.selfCollided =  True
+  def selfCollision(self):
+    for member in self.body[2:]:
+      if self.body[0] == member:
+        return True
 
   def bodyBackPropagation(self, i):
     self.body[i].x = self.body[i-1].x
@@ -90,8 +91,6 @@ class Snake():
     for i,member in enumerate(self.body):
       if i > 0:
         self.bodyBackPropagation(len(self.body)-i)
-      if i >= 3:
-        self.selfCollision(member)
     self.dirControl()
     self.debug()
     self.foodCollision(game,snack)
@@ -162,29 +161,18 @@ class Game():
     self.s.body[0].x < 0                   or \
     self.s.body[0].y > WIDTH-BLOCK_SIZE    or \
     self.s.body[0].y < 0:
-      #print("Wall collision!")
       return True
 
+  
+  def normalizeVector(self,vector):
+    dirVec = vector
+    dirVecNorm = np.linalg.norm(dirVec)
 
-  def angle_with_apple(self):
-    appleDirVec = np.array(self.snack.pos) - np.array(self.s.body[0])
-    snakeDirVec = self.s.vel.x , self.s.vel.y 
+    if dirVecNorm == 0:
+      dirVecNorm = BLOCK_SIZE
+    dirVecNormalized = dirVec / dirVecNorm
 
-    appleDirVecNorm = np.linalg.norm(appleDirVec)
-    snakeDirVecNorm = np.linalg.norm(snakeDirVec)
-
-    if appleDirVecNorm == 0:
-        appleDirVecNorm = BLOCK_SIZE
-    if snakeDirVecNorm == 0:
-        snakeDirVecNorm = BLOCK_SIZE
-
-    appleDirVecNormalized\
-       = appleDirVec / appleDirVecNorm
-
-    snakeDirVecNormalized\
-       = snakeDirVec / snakeDirVecNorm
-
-    return appleDirVecNormalized,snakeDirVecNormalized
+    return dirVecNormalized
 
   def isDirectionBlocked(self, direction):
     adjacentStep = self.s.body[0] + direction
@@ -213,7 +201,15 @@ class Game():
   def handle_network_inputs(self):
     inputs = [[0],[0],[0],[0],[0],[0],[0],[0]]
     self.s.ub, self.s.lb, self.s.rb, self.s.db = self.blockedDirections()
-    apple_angle, snake_dir_angle = self.angle_with_apple()
+
+    apple_angle = self.normalizeVector\
+                          (np.array(self.snack.pos) - \
+                           np.array(self.s.body[0]))
+
+    snake_dir_angle = self.normalizeVector\
+                          ((self.s.vel.x , self.s.vel.y))
+
+
     inputs[0] = [self.s.ub]
     inputs[1] = [self.s.lb]
     inputs[2] = [self.s.rb]
@@ -244,12 +240,12 @@ class Game():
         keyboardControl(self.s)
       if self.MOVES_LEFT <= 0:
         return self.gameOver(-10)
-      if self.s.selfCollided:
+      if self.s.selfCollision():
         return self.gameOver(-150)
       if self.wallCollision():
         return self.gameOver(-150)
+
       self.MOVES_LEFT -= 1
-      #self.s.ub, self.s.lb, self.s.rb, self.s.db = self.blockedDirections()
       
       if self.SIZES:
         output = self.handle_network_inputs()
