@@ -25,7 +25,7 @@ class Darwin():
                   saving_txt = False,
                   saving_dna = False):
 
-        pg.init()                
+        
         self.ID = cluster_id
         self.OFFSPRING_NUM = offspring_num  
         self.GENERATIONS = generations 
@@ -41,6 +41,8 @@ class Darwin():
         self.TICK = tick
         self.DELAY = None 
         self.DRAW = draw
+        if self.DRAW:
+          pg.init()                
 
         self.SAVING_CSV = saving_csv
         self.SAVING_TXT = saving_txt
@@ -197,7 +199,11 @@ class Darwin():
         current_time = datetime.now().strftime("%H:%M:%S")
         today_date = date.today()
         
-        self.infoHeader = "Gen test - " + str(today_date) + " - " + str(current_time)
+        self.infoHeader = "Gen test - "      + \
+                           str(today_date)   + \
+                           " - "             + \
+                           str(current_time)
+
         self.folder = "GenTests/"
         
         arqFileName = self.infoHeader + ".csv"
@@ -216,6 +222,7 @@ class Darwin():
           arq = open(self.folder + arqFileNameInfo, "w")
           arq.write(genInfo)
           arq.close()
+
         if self.SAVING_CSV:
           self.arq = open(self.folder + arqFileName,"w")
           self.arq.write("Generation, Best body lengths, Average body length\n")
