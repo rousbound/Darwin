@@ -6,7 +6,7 @@ from Intelect import *
 
 
 vec = pygame.Vector2
-WIDTH = 1000
+WIDTH = 600
 BLOCK_SIZE = 20
 ROWS = WIDTH/BLOCK_SIZE
 COLS = ROWS
@@ -36,13 +36,18 @@ class Snake():
     self.lb = False
     self.rb = False
     self.db = False
+    self.selfCollided = False
 
+  def selfCollision(self, member):
+    if self.body[0] == member:
+      self.selfCollided =  True
+      print("Self collision")
 
-  def dynamics(self):
-    for i in range(len(self.body)-1,0,-1):
-      self.body[i].x = self.body[i-1].x
-      self.body[i].y = self.body[i-1].y
+  def bodyBackPropagation(self, i):
+    self.body[i].x = self.body[i-1].x
+    self.body[i].y = self.body[i-1].y
   
+  def dirControl(self):
     if self.dir == 'right':
       self.body[0].x += self.step
       self.vel = vec(self.step,0)
@@ -62,14 +67,13 @@ class Snake():
     pass
   
   def draw(self, surface):
-     for i in range(0,len(self.body)):
-        pygame.draw.rect(surface, self.color,
-                                (self.body[i].x,
-                                 self.body[i].y,
-                                 BLOCK_SIZE,
-                                 BLOCK_SIZE))
+    for member in self.body:
+      pygame.draw.rect(surface, self.color,
+                                  (member.x,
+                                   member.y,
+                                   BLOCK_SIZE,
+                                   BLOCK_SIZE))
   
-        
   
   def foodCollision(self, game, snack):
     if self.body[0] == snack.pos:
@@ -89,8 +93,13 @@ class Snake():
     if input == 3 and (self.dir != 'left'):
         self.dir = 'right'
 
-  def update(self, game, snack):
-    self.dynamics()
+  def update(self, game, surface, snack):
+    for i,member in enumerate(self.body):
+      if i > 0:
+        self.bodyBackPropagation(len(self.body)-i)
+      if i >= 3:
+        self.selfCollision(member)
+    self.dirControl()
     self.debug()
     self.foodCollision(game,snack)
 
@@ -151,11 +160,6 @@ class Game():
     self.snack.draw(self.win)
     pygame.display.update()
 
-  def selfCollision(self):
-    for member in self.s.body[2:]:
-      if self.s.body[0] == member:
-        #print("Self collision!")
-        return True
 
 
   def wallCollision(self):
@@ -241,14 +245,14 @@ class Game():
       if self.TICK:
         self.clock.tick(self.TICK)
       self.events()
-      self.s.update(self,self.snack)
+      self.s.update(self,self.win,self.snack)
       if self.DRAW: 
         self.draw()
       if self.KEYBOARD:
         keyboardControl(self.s)
       if self.MOVES_LEFT <= 0:
         return self.gameOver(-10)
-      if self.selfCollision():
+      if self.s.selfCollided:
         return self.gameOver(-150)
       if self.wallCollision():
         return self.gameOver(-150)

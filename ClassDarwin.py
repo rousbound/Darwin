@@ -217,7 +217,7 @@ class Darwin():
                 self.TICK = None
             else:
               self.DRAW = False
-              self.TICK = self.TICK_COPY
+              self.TICK = None
 
             ndaScores,ndaBody_lengths = self.runCurrentGeneration(self.new_population)
 
