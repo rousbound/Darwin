@@ -3,16 +3,10 @@ import sys
 import random
 import numpy as np
 from Intelect import *
+from NeuralNetworkPlay import *
 
 
 vec = pygame.Vector2
-WIDTH = 200
-BLOCK_SIZE = 20
-ROWS = WIDTH/BLOCK_SIZE
-COLS = ROWS
-EXTRA_MOVES = 200
-MOVES_LEFT = 100
-
 
 def keyboardControl(snake):
   keys = pygame.key.get_pressed()
@@ -78,7 +72,7 @@ class Snake():
     if self.body[0] == snack.pos:
       self.body.insert(0,vec(self.body[0]))
       snack.spawn(self)
-      game.MOVES_LEFT += game.EXTRA_MOVES
+      game.MOVES_LEFT = game.EXTRA_MOVES
   
     
   
@@ -92,7 +86,7 @@ class Snake():
     if input == 3 and (self.dir != 'left'):
         self.dir = 'right'
 
-  def update(self, game, surface, snack):
+  def update(self, game, snack):
     for i,member in enumerate(self.body):
       if i > 0:
         self.bodyBackPropagation(len(self.body)-i)
@@ -129,13 +123,15 @@ class Food():
 
 class Game():
   def __init__(self,sizes = None, weights = None, tick = None, draw = False, keyboard = False):
-    self.win = pygame.display.set_mode((WIDTH, WIDTH))
-    self.clock = pygame.time.Clock()
     self.KEYBOARD = keyboard
 
     self.TICK = tick 
     self.DRAW = draw
     self.SIZES = sizes
+
+    if self.DRAW:
+      self.win = pygame.display.set_mode((WIDTH, WIDTH))
+      self.clock = pygame.time.Clock()
     
     if self.SIZES:
       self.network = Network(sizes,weights)
@@ -171,26 +167,24 @@ class Game():
 
 
   def angle_with_apple(self):
-    snack_pos = (self.snack.pos.x,self.snack.pos.y)
-    body_pos = (self.s.body[0].x,self.s.body[0].y)
-    apple_direction_vector = np.array(snack_pos) - np.array(body_pos)
-    snake_direction_vector = self.s.vel.x , self.s.vel.y 
+    appleDirVec = np.array(self.snack.pos) - np.array(self.s.body[0])
+    snakeDirVec = self.s.vel.x , self.s.vel.y 
 
-    norm_of_apple_direction_vector = np.linalg.norm(apple_direction_vector)
-    norm_of_snake_direction_vector = np.linalg.norm(snake_direction_vector)
+    appleDirVecNorm = np.linalg.norm(appleDirVec)
+    snakeDirVecNorm = np.linalg.norm(snakeDirVec)
 
-    if norm_of_apple_direction_vector == 0:
-        norm_of_apple_direction_vector = BLOCK_SIZE
-    if norm_of_snake_direction_vector == 0:
-        norm_of_snake_direction_vector = BLOCK_SIZE
+    if appleDirVecNorm == 0:
+        appleDirVecNorm = BLOCK_SIZE
+    if snakeDirVecNorm == 0:
+        snakeDirVecNorm = BLOCK_SIZE
 
-    apple_direction_vector_normalized\
-       = apple_direction_vector / norm_of_apple_direction_vector
+    appleDirVecNormalized\
+       = appleDirVec / appleDirVecNorm
 
-    snake_direction_vector_normalized\
-       = snake_direction_vector / norm_of_snake_direction_vector
+    snakeDirVecNormalized\
+       = snakeDirVec / snakeDirVecNorm
 
-    return apple_direction_vector_normalized,snake_direction_vector_normalized
+    return appleDirVecNormalized,snakeDirVecNormalized
 
   def isDirectionBlocked(self, direction):
     adjacentStep = self.s.body[0] + direction
@@ -242,10 +236,10 @@ class Game():
     while True:
       if self.TICK:
         self.clock.tick(self.TICK)
-      self.events()
-      self.s.update(self,self.win,self.snack)
+      self.s.update(self,self.snack)
       if self.DRAW: 
         self.draw()
+        self.events()
       if self.KEYBOARD:
         keyboardControl(self.s)
       if self.MOVES_LEFT <= 0:

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 
-smartPyDebug Meta.py 
+smartPyDebug NeuralNetworkPlay.py 

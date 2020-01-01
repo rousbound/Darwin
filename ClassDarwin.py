@@ -1,6 +1,7 @@
-from NewCobra import *
+from Cobra import *
 import random
 import pygame as pg
+import atexit
 
 # Standard build
 # OFFSPRING_NUM = 2000
@@ -19,8 +20,6 @@ class Darwin():
                   mutation_rate = 25,
                   crossing_algorithm = "uniform",
                   cluster_id = "Darwin 1",
-                  draw = False,
-                  tick = None,
                   saving_csv = False,
                   saving_txt = False,
                   saving_dna = False):
@@ -37,12 +36,6 @@ class Darwin():
         self.MUTATION_RATE = mutation_rate   
         self.CROSSOVER_ALGORITHM = crossing_algorithm
 
-        self.TICK_COPY = tick
-        self.TICK = tick
-        self.DELAY = None 
-        self.DRAW = draw
-        if self.DRAW:
-          pg.init()                
 
         self.SAVING_CSV = saving_csv
         self.SAVING_TXT = saving_txt
@@ -77,11 +70,8 @@ class Darwin():
         for i,weight in enumerate(self.new_population):
 
             snakeLifeSpan                  =           Game\
-                              (self.SIZES,
-                                   weights = weight, 
-                                      tick = self.TICK, 
-                                      draw = self.DRAW, 
-                                  keyboard = True)
+                               (self.SIZES,
+                                   weights = weight) 
 
             score, body = snakeLifeSpan.main()
             scores[i] = score
@@ -229,23 +219,13 @@ class Darwin():
 
     def main(self):
         self.statisticsFileHandler()
+        atexit.register(self.returnOverallBest)
 
         for self.generation in range(self.GENERATIONS+1):
 
-            if self.generation >= self.VIEW_GENERATIONS:
-              if self.generation % self.VIEW_GENERATIONS == 0:
-                self.DRAW = True
-                self.TICK = self.TICK_COPY
-              else:
-                self.DRAW = False
-                self.TICK = None
-            else:
-              self.DRAW = False
-              self.TICK = None
-
             ndaScores,ndaBody_lengths = self.runCurrentGeneration(self.new_population)
 
-            maximum_score,ndaMaximum_bodies,bestAncestorsIndexes = self.getMaximums(ndaScores,ndaBody_lengths)
+            maximum_score,ndaMaximum_bodies,self.bestAncestorsIndexes = self.getMaximums(ndaScores,ndaBody_lengths)
 
             if self.generation == self.GENERATIONS+1: # Exit loop without generating new offspring
                 break
@@ -263,7 +243,7 @@ class Darwin():
               self.arq.write(csvLine)
 
             # Generate new offspring
-            ndaBestParents = self.copyParents(bestAncestorsIndexes)
+            ndaBestParents = self.copyParents(self.bestAncestorsIndexes)
             OFFSPRING_NUM_MINUS_PARENTS = self.OFFSPRING_NUM - ndaBestParents.shape[0] #Gotta preserve the parents
             crossedNewOffspring = self.crossoverHandler(self.CROSSOVER_ALGORITHM,ndaBestParents,OFFSPRING_NUM_MINUS_PARENTS)
             mutatedNewOffspring = self.mutation(crossedNewOffspring)
@@ -273,13 +253,14 @@ class Darwin():
             self.new_population[ndaBestParents.shape[0]:,:] = mutatedNewOffspring
   
         if self.SAVING_DNA:
-          self.returnOverallBest(bestAncestorsIndexes)
+          self.returnOverallBest()
         if self.SAVING_CSV:
           self.arq.close()
 
         
 
-    def returnOverallBest(self,bestIndexes):
+    def returnOverallBest(self):
+        bestIndexes = self.bestAncestorsIndexes
         best = np.zeros((self.NUM_PARENTS,self.total_weights))
         for i,bestIndex in enumerate(bestIndexes):
             best[i] = self.new_population[bestIndex]
