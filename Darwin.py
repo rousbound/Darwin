@@ -243,6 +243,7 @@ class Darwin():
             # Generate new offspring
             ndaBestParents = self.copyParents(self.bestAncestorsIndexes)
             OFFSPRING_NUM_MINUS_PARENTS = self.OFFSPRING_NUM - ndaBestParents.shape[0] #Gotta preserve the parents
+
             crossedNewOffspring = self.crossoverHandler\
                                     (self.CROSSOVER_ALGORITHM, \
                                     ndaBestParents,            \

@@ -16,7 +16,6 @@ class Network(object):
         self.num_layers = len(sizes)
         self.sizes = sizes
         self.sizePairs = [[x,y] for (x,y) in zip(self.sizes[1:],self.sizes[:-1])]
-        #print(self.sizePairs)
 
         if np.any(weights):
             self.weights = weights
@@ -38,7 +37,8 @@ class Network(object):
 
         for x in self.synapsesLayersCount:
             length = len(self.synapsesLayersWeights)
-            self.synapsesLayersWeights.append(self.weights[length:length+x])
+            self.synapsesLayersWeights.append\
+                                      (self.weights[length:length+x])
         
         neuronsSynapses = []
         for x,y in zip(self.synapsesLayersWeights,self.sizePairs):
