@@ -6,7 +6,7 @@ import atexit
 # Standard build
 # OFFSPRING_NUM = 2000
 # GENERATIONS = 200
-# SIZES = [8,9,15,3]
+# SIZES = [8,9,15,4]
 # NUM_PARENTS = 100
 # MUTATION_RATE = 25
 
@@ -31,7 +31,7 @@ class Darwin():
         self.VIEW_GENERATIONS = view_generations
         self.generation = 0
         self.SIZES = sizes           
-        print(self.SIZES)
+
         self.NUM_PARENTS = num_parents
         self.MUTATION_RATE = mutation_rate   
         self.CROSSOVER_ALGORITHM = crossing_algorithm
@@ -69,9 +69,9 @@ class Darwin():
 
         for i,weight in enumerate(self.new_population):
 
-            snakeLifeSpan                  =           Game\
-                               (self.SIZES,
-                                   weights = weight) 
+            snakeLifeSpan              =               Game\
+                               (sizes  = self.SIZES,
+                               weights = weight) 
 
             score, body = snakeLifeSpan.main()
             scores[i] = score
@@ -222,27 +222,32 @@ class Darwin():
 
         for self.generation in range(self.GENERATIONS+1):
 
-            ndaScores,ndaBody_lengths = self.runCurrentGeneration(self.new_population)
+            ndaScores,\
+            ndaBody_lengths = self.runCurrentGeneration(self.new_population)
 
-            maximum_score,ndaMaximum_bodies,self.bestAncestorsIndexes = self.getMaximums(ndaScores,ndaBody_lengths)
+            maximum_score,          \
+            ndaMaximum_bodies,      \
+            self.bestAncestorsIndexes = self.getMaximums(ndaScores,ndaBody_lengths)
+
             if self.generation == self.GENERATIONS+1: 
                 break
 
-            print("--------------------------------------")
-            print("Cluster: ", self.ID)
-            print("Generation:",self.generation)
-            #print("Bests scores of generation:",maximum_score)
-            print("Best body_length of generation",ndaMaximum_bodies)
+            print("-----------------------------------------------------")
+            print("Cluster: ",                                    self.ID)
+            print("Generation:",                          self.generation)
+            print("Best body_length of generation",     ndaMaximum_bodies)
             print("Mean body_length of generation",ndaBody_lengths.mean())
-            print("-------------------------------------")
+            print("-----------------------------------------------------")
       
             if self.SAVING_CSV:
-              csvLine = "%d, %d, %f\n"%(self.generation,ndaMaximum_bodies.max(),ndaBody_lengths.mean())
+              csvLine = "%d, %d, %f\n"%(self.generation,        \
+                                        ndaMaximum_bodies.max(),\
+                                        ndaBody_lengths.mean())
               self.arq.write(csvLine)
 
             # Generate new offspring
             ndaBestParents = self.copyParents(self.bestAncestorsIndexes)
-            OFFSPRING_NUM_MINUS_PARENTS = self.OFFSPRING_NUM - ndaBestParents.shape[0] #Gotta preserve the parents
+            OFFSPRING_NUM_MINUS_PARENTS = self.OFFSPRING_NUM - ndaBestParents.shape[0]
 
             crossedNewOffspring = self.crossoverHandler\
                                     (self.CROSSOVER_ALGORITHM, \
