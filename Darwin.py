@@ -3,7 +3,7 @@ import random
 import pygame as pg
 import atexit
 
-# Standard build
+# Standa_rd build
 # OFFSPRING_NUM = 2000
 # GENERATIONS = 200
 # SIZES = [8,9,15,4]
@@ -79,54 +79,6 @@ class Darwin():
 
         return scores, bodies
 
-
-
-
-
-    def getMaximums(self,score,body):
-        # Copy this array because we're gonna modify it
-        scores = score.copy() 
-        bodies = body.copy()
-
-        bestAncestorsIndexes = []
-
-        maximum_score = np.zeros(self.NUM_PARENTS)
-        maximum_body = np.zeros(self.NUM_PARENTS)
-
-        # Get NUM_PARENTS number of maximum values 
-        for parentIndex in range(self.NUM_PARENTS):
-
-            max_score = np.max(scores)
-            max_body = np.max(bodies)
-
-            index_max_score = np.argmax(scores)
-            index_max_body = np.argmax(bodies)
-
-            # Take out the best from the gene pool
-            # So we can capture the second best and so on...
-
-            scores[index_max_score] = 0
-            bodies[index_max_score] = -99999
-
-            maximum_score[parentIndex] = max_score
-            maximum_body[parentIndex] = max_body
-
-            bestAncestorsIndexes.append(index_max_body)
-
-        return maximum_score, maximum_body, bestAncestorsIndexes
-
-    def copyParents(self,bestAncestorsIndexes):
-        
-        x_size = self.NUM_PARENTS
-        y_size = self.new_population.shape[1]
-        ndaParents = np.empty((x_size, y_size))
-      
-        # Copy NUM_PARENTS numbers to ndaParents
-        for i,parent in enumerate(ndaParents):
-            ndaParents[i] = self.new_population[bestAncestorsIndexes[i]]
-
-        return ndaParents
-
     def uniformCrossover(self,parents,OFFSPRING_NUM):
         new_offspring = np.empty((OFFSPRING_NUM,parents.shape[1]))
 
@@ -174,12 +126,12 @@ class Darwin():
 
                 # Returns between 0 and size_y-1
                 random_weight_index = random.randrange(size_y) 
-                ndaRandom_weight          =           np.random.choice\
+                nda_Random_weight          =           np.random.choice\
                             (np.arange(-1,1,step = 0.001),
                                             size = (1), 
                                          replace = False)
 
-                offspring_crossover[idx,random_weight_index] += ndaRandom_weight
+                offspring_crossover[idx,random_weight_index] += nda_Random_weight
 
         return offspring_crossover
 
@@ -194,7 +146,6 @@ class Darwin():
                            " - "             + \
                            str(current_time)
 
-        self.folder = "GenTests/"
         
         arqFileName = self.infoHeader + ".csv"
         arqFileNameInfo = self.infoHeader + " - info.txt"
@@ -208,13 +159,15 @@ class Darwin():
 
         print(genInfo)
   
+        self.folder = "GenTests/"
+
         if self.SAVING_TXT:
           arq = open(self.folder + arqFileNameInfo, "w")
           arq.write(genInfo)
           arq.close()
 
         if self.SAVING_CSV:
-          self.arq = open(self.folder + arqFileName,"w")
+          self.arq = open(self.folder + arqFileName, "w")
           self.arq.write("Generation, Best body lengths, Average body length\n")
 
     def main(self):
@@ -222,12 +175,12 @@ class Darwin():
 
         for self.generation in range(self.GENERATIONS+1):
 
-            ndaScores,\
-            ndaBody_lengths = self.runCurrentGeneration(self.new_population)
+            nda_Scores,\
+            nda_BodyLengths = self.runCurrentGeneration(self.new_population)
 
-            maximum_score,          \
-            ndaMaximum_bodies,      \
-            self.bestAncestorsIndexes = self.getMaximums(ndaScores,ndaBody_lengths)
+            self.nda_bestAncestorsIndexes = np.argsort(-nda_Scores)[:self.NUM_PARENTS]
+
+            nda_MaximumBodies = -np.sort(-nda_BodyLengths)[:self.NUM_PARENTS]
 
             if self.generation == self.GENERATIONS+1: 
                 break
@@ -235,30 +188,32 @@ class Darwin():
             print("-----------------------------------------------------")
             print("Cluster: ",                                    self.ID)
             print("Generation:",                          self.generation)
-            print("Best body_length of generation",     ndaMaximum_bodies)
-            print("Mean body_length of generation",ndaBody_lengths.mean())
+            print("Best body_length of generation",  nda_MaximumBodies[0])
+            print("Mean body_length of generation",nda_BodyLengths.mean())
             print("-----------------------------------------------------")
       
             if self.SAVING_CSV:
-              csvLine = "%d, %d, %f\n"%(self.generation,        \
-                                        ndaMaximum_bodies.max(),\
-                                        ndaBody_lengths.mean())
+              csvLine = "%d, %d, %f\n"      %           (self.generation,\
+                                                    nda_MaximumBodies[0],\
+                                                    nda_BodyLengths.mean())
               self.arq.write(csvLine)
 
             # Generate new offspring
-            ndaBestParents = self.copyParents(self.bestAncestorsIndexes)
-            OFFSPRING_NUM_MINUS_PARENTS = self.OFFSPRING_NUM - ndaBestParents.shape[0]
+            nda_BestParents = np.array([self.new_population[x]\
+                                 for x in self.nda_bestAncestorsIndexes])
 
-            crossedNewOffspring = self.crossoverHandler\
-                                    (self.CROSSOVER_ALGORITHM, \
-                                    ndaBestParents,            \
-                                    OFFSPRING_NUM_MINUS_PARENTS)
-            # Exit loop 
-            mutatedNewOffspring = self.mutation(crossedNewOffspring)
+            OFFSPRING_NUM_MINUS_PARENTS = self.OFFSPRING_NUM - self.NUM_PARENTS
+
+            nda_crossedNewOffspring        =            self.crossoverHandler\
+                                              (self.CROSSOVER_ALGORITHM, \
+                                              nda_BestParents,            \
+                                              OFFSPRING_NUM_MINUS_PARENTS)
+
+            nda_mutatedNewOffspring = self.mutation(nda_crossedNewOffspring)
 
             # Preserve the parents
-            self.new_population[0:ndaBestParents.shape[0], :] = ndaBestParents
-            self.new_population[ndaBestParents.shape[0]:,:] = mutatedNewOffspring
+            self.new_population[0:nda_BestParents.shape[0], :] = nda_BestParents
+            self.new_population[nda_BestParents.shape[0]:,:] = nda_mutatedNewOffspring
   
         if self.SAVING_DNA:
           self.returnOverallBest()
@@ -268,7 +223,7 @@ class Darwin():
         
 
     def returnOverallBest(self):
-        bestIndexes = self.bestAncestorsIndexes
+        bestIndexes = self.nda_bestAncestorsIndexes
         best = np.zeros((self.NUM_PARENTS,self.total_weights))
         for i,bestIndex in enumerate(bestIndexes):
             best[i] = self.new_population[bestIndex]
