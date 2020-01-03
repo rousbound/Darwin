@@ -26,10 +26,6 @@ class Snake():
     self.color = (255,0,0)
     self.step = BLOCK_SIZE
     self.vel = vec(0,0)
-    self.ub = False
-    self.lb = False
-    self.rb = False
-    self.db = False
     self.selfCollided = False
 
   def selfCollision(self):
@@ -43,21 +39,20 @@ class Snake():
   
   def dirControl(self):
     if self.dir == 'right':
-      self.body[0].x += self.step
-      self.vel = vec(self.step,0)
+      self.body[0].x += BLOCK_SIZE
+      self.vel = vec(BLOCK_SIZE,0)
     if self.dir == 'left':
-      self.body[0].x -= self.step
-      self.vel = vec(-self.step, 0)
+      self.body[0].x -= BLOCK_SIZE
+      self.vel = vec(BLOCK_SIZE, 0)
     if self.dir == 'up':
-      self.body[0].y -= self.step
-      self.vel = vec(0, -self.step)
+      self.body[0].y -= BLOCK_SIZE
+      self.vel = vec(0, -BLOCK_SIZE)
     if self.dir == 'down':
-      self.body[0].y += self.step
-      self.vel = vec(0, self.step)
+      self.body[0].y += BLOCK_SIZE
+      self.vel = vec(0, BLOCK_SIZE)
 
   def debug(self):
     #print("Head pos:", self.body[0])
-    #print('Up:%s, Right:%s, Left:%s, Down: %s'%(self.ub,self.rb,self.lb,self.db))
     pass
   
   def draw(self, surface):
@@ -164,8 +159,7 @@ class Game():
       return True
 
   
-  def normalizeVector(self,vector):
-    dirVec = vector
+  def normalizeVector(self,dirVec):
     dirVecNorm = np.linalg.norm(dirVec)
 
     if dirVecNorm == 0:
@@ -200,7 +194,7 @@ class Game():
 
   def handle_network_inputs(self):
     inputs = [[0],[0],[0],[0],[0],[0],[0],[0]]
-    self.s.ub, self.s.lb, self.s.rb, self.s.db = self.blockedDirections()
+    ub, lb, rb, db = self.blockedDirections()
 
     apple_angle = self.normalizeVector\
                           (np.array(self.snack.pos) - \
@@ -210,10 +204,10 @@ class Game():
                           ((self.s.vel.x , self.s.vel.y))
 
 
-    inputs[0] = [self.s.ub]
-    inputs[1] = [self.s.lb]
-    inputs[2] = [self.s.rb]
-    inputs[3] = [self.s.db]
+    inputs[0] = [ub]
+    inputs[1] = [lb]
+    inputs[2] = [rb]
+    inputs[3] = [db]
     inputs[4] = [apple_angle[0]]
     inputs[5] = [apple_angle[1]]
     inputs[6] = [snake_dir_angle[0]]
