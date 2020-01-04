@@ -19,12 +19,13 @@ class Darwin():
                   num_parents = 1000,
                   mutation_rate = 25,
                   crossing_algorithm = "uniform",
-                  cluster_id = "Darwin 1",
+                  cluster_id = "",
                   saving_csv = False,
                   saving_txt = False,
-                  saving_dna = False):
+                  saving_dna = False,
+                  tty = None):
 
-        
+        self.TTY = tty 
         self.ID = cluster_id
         self.OFFSPRING_NUM = offspring_num  
         self.GENERATIONS = generations 
@@ -144,7 +145,8 @@ class Darwin():
         self.infoHeader = "Gen test - "      + \
                            str(today_date)   + \
                            " - "             + \
-                           str(current_time)
+                           str(current_time) + \
+                           str(self.ID)
 
         
         arqFileName = self.infoHeader + ".csv"
@@ -185,12 +187,21 @@ class Darwin():
             if self.generation == self.GENERATIONS+1: 
                 break
 
-            print("-----------------------------------------------------")
-            print("Cluster: ",                                    self.ID)
-            print("Generation:",                          self.generation)
-            print("Best body_length of generation",  nda_MaximumBodies[0])
-            print("Mean body_length of generation",nda_BodyLengths.mean())
-            print("-----------------------------------------------------")
+            statisticsMonitor = "-------------------------------------------------\n"   + \
+            "Cluster: %s\n"                         %                      str(self.ID) + \
+            "Generation: %s\n"                      %              str(self.generation) + \
+            "Best body_length of generation: %s\n"  %         str(nda_MaximumBodies[0]) + \
+            "Mean body_length of generation: %f\n"  %            nda_BodyLengths.mean() + \
+            "-----------------------------------------------------------------------\n"
+            print(statisticsMonitor)
+        
+
+            if self.TTY:
+             tty = "/dev/pts/" + str(self.TTY)
+             with open(tty, "wb+", buffering=0) as term:
+               term.write(statisticsMonitor.encode()) 
+            else:
+              print(statisticsMonitor)
       
             if self.SAVING_CSV:
               csvLine = "%d, %d, %f\n"      %           (self.generation,\
