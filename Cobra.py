@@ -99,7 +99,7 @@ class Food():
     while True:
       x = random.randint(0,(ROWS-1))*BLOCK_SIZE
       y = random.randint(0,(COLS-1))*BLOCK_SIZE
-      if len(list(filter(lambda z : z == vec(x,y), snake.body))) > 0:
+      if vec(x,y) in snake.body:
         continue
       else:
         break
@@ -193,7 +193,7 @@ class Game():
     return ub,lb,rb,db
 
   def handle_network_inputs(self):
-    inputs = [[0],[0],[0],[0],[0],[0],[0],[0]]
+    inputs = [ [0] for x in range(self.SIZES[0])]
     ub, lb, rb, db = self.blockedDirections()
 
     apple_angle = self.normalizeVector\
@@ -202,7 +202,7 @@ class Game():
 
     snake_dir_angle = self.normalizeVector\
                           ((self.s.vel.x , self.s.vel.y))
-
+    
 
     inputs[0] = [ub]
     inputs[1] = [lb]

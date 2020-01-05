@@ -23,6 +23,7 @@ class Darwin():
                   saving_csv = False,
                   saving_txt = False,
                   saving_dna = False,
+                  saveDnaThreshold = 90,
                   tty = None):
 
         self.TTY = tty 
@@ -41,6 +42,8 @@ class Darwin():
         self.SAVING_CSV = saving_csv
         self.SAVING_TXT = saving_txt
         self.SAVING_DNA = saving_dna
+        self.saveDnaThreshold = saveDnaThreshold
+        self.dnasSaved = 1
 
         self.lInput = self.SIZES[0]
         self.lHidden = self.SIZES[1:-1]
@@ -193,8 +196,6 @@ class Darwin():
             "Best body_length of generation: %s\n"  %         str(nda_MaximumBodies[0]) + \
             "Mean body_length of generation: %f\n"  %            nda_BodyLengths.mean() + \
             "-----------------------------------------------------------------------\n"
-            print(statisticsMonitor)
-        
 
             if self.TTY:
              tty = "/dev/pts/" + str(self.TTY)
@@ -208,6 +209,8 @@ class Darwin():
                                                     nda_MaximumBodies[0],\
                                                     nda_BodyLengths.mean())
               self.arq.write(csvLine)
+            if nda_MaximumBodies[0] > self.saveDnaThreshold:
+              self.returnOverallBest()
 
             # Generate new offspring
             nda_BestParents = np.array([self.new_population[x]\
@@ -239,7 +242,8 @@ class Darwin():
         for i,bestIndex in enumerate(bestIndexes):
             best[i] = self.new_population[bestIndex]
         print("Saving Weights")
-        np.save(self.folder + self.infoHeader + '.npy',best)
+        np.save(self.folder + self.infoHeader + "-" + str(self.dnasSaved) + '.npy' , best)
+        self.dnasSaved += 1
 
 
 

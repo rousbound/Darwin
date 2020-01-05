@@ -6,23 +6,35 @@ COLS = ROWS
 EXTRA_MOVES = 100
 MOVES_LEFT = 100
 
+"""
+Main build:
+  offspring_num = 200,
+  generations = 500,
+  view_generations = 1000,
+  sizes=[8,9,15,4],
+  num_parents = 24,
+  mutation_rate = 5,
+  crossing_algorithm = "uniform",
+"""
+
 if __name__ == "__main__":
   from Darwin import Darwin
   import threading
-  darwin = Darwin(offspring_num = 200,
+  darwin = Darwin(offspring_num = 400,
                     generations = 500,
                     view_generations = 1000,
                     sizes=[8,9,15,4],
-                    num_parents = 24,
+                    num_parents = 12,
                     mutation_rate = 5,
                     crossing_algorithm = "uniform",
                     cluster_id = "Darwin 1",
                     saving_txt = True,
                     saving_csv = True,
                     saving_dna = True,
+                    saveDnaThreshold = 90,
                     tty = None)  
 
-  darwin2 = Darwin(offspring_num = 200,
+  """darwin2 = Darwin(offspring_num = 200,
                     generations = 50,
                     view_generations = 1000,
                     sizes=[8,9,15,4],
@@ -33,7 +45,7 @@ if __name__ == "__main__":
                     saving_txt = True,
                     saving_csv = True,
                     saving_dna = True,
-                    tty = 4)  
+                    tty = 4)  """
   darwin.main()
   
 """
@@ -42,4 +54,5 @@ if __name__ == "__main__":
   d1.start()
   d2.start()
 """
+
 

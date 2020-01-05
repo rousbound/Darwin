@@ -2,11 +2,11 @@ from Cobra import *
 import sys
 
 
-
-best = np.load(sys.argv[2])
+speed = input("Input speed:")
+best = np.load(sys.argv[1])
 print("saving out:",best)
 print(best.shape)
 for n,i in enumerate(best):
     print("specimen %d"%n)
-    g = Game([8,9,15,4],weights=i,tick=int(sys.argv[1]),draw=True)
+    g = Game([9,9,15,4],weights=i,tick=int(speed),draw=True)
     print(g.main())
