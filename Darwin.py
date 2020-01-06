@@ -15,7 +15,6 @@ class Darwin():
     def __init__(self,  
                   offspring_num = 2000,
                   generations = 200,
-                  view_generations = 50,
                   sizes=[8,9,15,4], 
                   num_parents = 1000,
                   mutation_rate = 25,
@@ -32,7 +31,6 @@ class Darwin():
         self.ID = cluster_id
         self.OFFSPRING_NUM = offspring_num  
         self.GENERATIONS = generations 
-        self.VIEW_GENERATIONS = view_generations
         self.generation = 0
         self.SIZES = sizes           
         self.OLD_DNA_PATH = loadDnaPath
