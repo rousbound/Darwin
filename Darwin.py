@@ -53,19 +53,22 @@ class Darwin():
         self.total_weights = self.get_total_weights()
         self.population_shape = (self.OFFSPRING_NUM,self.total_weights)
 
-        if self.OLD_DNA_PATH:
+        # Import parents from previously trained offspring
+        if self.OLD_DNA_PATH: 
           old_dna = np.load(self.OLD_DNA_PATH)
-          self.new_population = np.empty((self.OFFSPRING_NUM,self.total_weights))
-          self.new_population[0:self.NUM_PARENTS, :] = old_dna
-          self.new_population[self.NUM_PARENTS:,:] = np.random.choice \
+          self.nda_newPopulation = np.empty(self.population_shape)
+          self.nda_newPopulation[0:self.NUM_PARENTS, :] = old_dna
+
+          self.nda_newPopulation[self.NUM_PARENTS:,:] = np.random.choice \
                                 (np.arange(-1,1,step = 0.01),
                                                 size = (self.OFFSPRING_NUM - \
                                                         self.NUM_PARENTS, \
                                                         self.total_weights),
                                              replace = True)
-        
+
+        # Initiate all the population randomly
         else:
-          self.new_population             =            np.random.choice \
+          self.nda_newPopulation             =            np.random.choice \
                                 (np.arange(-1,1,step = 0.01),
                                                 size = self.population_shape,
                                              replace = True)
@@ -84,7 +87,7 @@ class Darwin():
         bodies = np.empty(self.OFFSPRING_NUM)
         
 
-        for i,weight in enumerate(self.new_population):
+        for i,weight in enumerate(self.nda_newPopulation):
 
             snakeLifeSpan              =               Game\
                                (sizes  = self.SIZES,
@@ -104,7 +107,7 @@ class Darwin():
                 p1 = random.randrange(parents.shape[0])
                 p2 = random.randrange(parents.shape[0])
                 if p1 != p2:
-                  for weight in range(self.new_population.shape[1]):
+                  for weight in range(self.nda_newPopulation.shape[1]):
                     if random.uniform(0,1) < 0.5:
                         new_offspring[children,weight] = parents[p1,weight]
                     else:
@@ -120,7 +123,7 @@ class Darwin():
                 p1 = random.randrange(parents.shape[0])
                 p2 = random.randrange(parents.shape[0])
                 if p1 != p2:
-                  pivotPoint = random.choice(range(self.new_population.shape[1]))
+                  pivotPoint = random.choice(range(self.nda_newPopulation.shape[1]))
                   new_offspring[children,:pivotPoint] = parents[p1,:pivotPoint] 
                   new_offspring[children,pivotPoint:] = parents[p2,pivotPoint:] 
                 break
@@ -193,7 +196,7 @@ class Darwin():
         for self.generation in range(self.GENERATIONS+1):
 
             nda_Scores,\
-            nda_BodyLengths = self.runCurrentGeneration(self.new_population)
+            nda_BodyLengths = self.runCurrentGeneration(self.nda_newPopulation)
             self.nda_bestAncestorsIndexes = np.argsort(-nda_Scores)[:self.NUM_PARENTS]
             nda_MaximumBodies = -np.sort(-nda_BodyLengths)[:self.NUM_PARENTS]
             if self.generation == self.GENERATIONS+1: 
@@ -225,7 +228,7 @@ class Darwin():
                 self.returnOverallBest(nda_MaximumBodies[0])
 
             # Generate new offspring
-            nda_BestParents = np.array([self.new_population[x]\
+            nda_BestParents = np.array([self.nda_newPopulation[x]\
                                  for x in self.nda_bestAncestorsIndexes])
 
             OFFSPRING_NUM_MINUS_PARENTS = self.OFFSPRING_NUM - self.NUM_PARENTS
@@ -238,8 +241,8 @@ class Darwin():
             nda_mutatedNewOffspring = self.mutation(nda_crossedNewOffspring)
 
             # Preserve the parents
-            self.new_population[0:nda_BestParents.shape[0], :] = nda_BestParents
-            self.new_population[nda_BestParents.shape[0]:,:] = nda_mutatedNewOffspring
+            self.nda_newPopulation[0:nda_BestParents.shape[0], :] = nda_BestParents
+            self.nda_newPopulation[nda_BestParents.shape[0]:,:] = nda_mutatedNewOffspring
   
         if self.SAVING_DNA:
           self.returnOverallBest()
@@ -252,7 +255,7 @@ class Darwin():
         bestIndexes = self.nda_bestAncestorsIndexes
         best = np.zeros((self.NUM_PARENTS,self.total_weights))
         for i,bestIndex in enumerate(bestIndexes):
-            best[i] = self.new_population[bestIndex]
+            best[i] = self.nda_newPopulation[bestIndex]
         print("Saving Weights")
         np.save(self.folder + self.infoHeader + "-" + str(self.dnasSaved) + "-" + str(maximumBody) + '.npy' , best)
         self.dnasSaved += 1

@@ -247,8 +247,7 @@ class Game():
 
   def main(self):
     while True:
-      print("LENGTH:",len(self.s.body))
-      if len(self.s.body) >= 220:
+      if len(self.s.body) >= 100:
         return self.youWon()
       if self.TICK:
         self.clock.tick(self.TICK)

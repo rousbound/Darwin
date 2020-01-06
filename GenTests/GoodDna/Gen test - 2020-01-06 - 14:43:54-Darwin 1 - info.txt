@@ -3,3 +3,5 @@ Sizes: [20, 21, 27, 4]
 Offspring Count: 1000
 Number of Parents: 64
 Mutation rate: 7
+
+Winner

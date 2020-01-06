@@ -8,18 +8,18 @@ MOVES_LEFT = 100
 
 """
 Main build:
-  offspring_num = 200,
+  offspring_num = 2000,
   generations = 500,
-  view_generations = 1000,
-  sizes=[8,9,15,4],
-  num_parents = 24,
-  mutation_rate = 5,
+  view_generations = 64,
+  sizes=[20,21,27,4],
+  num_parents = 64,
+  mutation_rate = 7,
   crossing_algorithm = "uniform",
 """
 
 if __name__ == "__main__":
   from Darwin import Darwin
-  darwin = Darwin(offspring_num = 1000,
+  darwin = Darwin(offspring_num = 100,
                     generations = 50,
                     sizes=[20,21,27,4],
                     num_parents = 64,
