@@ -1,4 +1,5 @@
 from Cobra import *
+from datetime import datetime,date
 import random
 import pygame as pg
 import atexit
@@ -24,7 +25,8 @@ class Darwin():
                   saving_txt = False,
                   saving_dna = False,
                   saveDnaThreshold = 90,
-                  tty = None):
+                  tty = None,
+                  loadDnaPath = None):
 
         self.TTY = tty 
         self.ID = cluster_id
@@ -33,6 +35,7 @@ class Darwin():
         self.VIEW_GENERATIONS = view_generations
         self.generation = 0
         self.SIZES = sizes           
+        self.OLD_DNA_PATH = loadDnaPath
 
         self.NUM_PARENTS = num_parents
         self.MUTATION_RATE = mutation_rate   
@@ -52,10 +55,22 @@ class Darwin():
         self.total_weights = self.get_total_weights()
         self.population_shape = (self.OFFSPRING_NUM,self.total_weights)
 
-        self.new_population             =            np.random.choice \
-                              (np.arange(-1,1,step = 0.01),
-                                              size = self.population_shape,
-                                           replace = True)
+        if self.OLD_DNA_PATH:
+          old_dna = np.load(self.OLD_DNA_PATH)
+          self.new_population = np.empty((self.OFFSPRING_NUM,self.total_weights))
+          self.new_population[0:self.NUM_PARENTS, :] = old_dna
+          self.new_population[self.NUM_PARENTS:,:] = np.random.choice \
+                                (np.arange(-1,1,step = 0.01),
+                                                size = (self.OFFSPRING_NUM - \
+                                                        self.NUM_PARENTS, \
+                                                        self.total_weights),
+                                             replace = True)
+        
+        else:
+          self.new_population             =            np.random.choice \
+                                (np.arange(-1,1,step = 0.01),
+                                                size = self.population_shape,
+                                             replace = True)
 
 
     def get_total_weights(self):
@@ -141,14 +156,13 @@ class Darwin():
 
 
     def statisticsFileHandler(self):
-        from datetime import datetime,date
         current_time = datetime.now().strftime("%H:%M:%S")
         today_date = date.today()
         
         self.infoHeader = "Gen test - "      + \
                            str(today_date)   + \
                            " - "             + \
-                           str(current_time) + \
+                     str(current_time) + "-" + \
                            str(self.ID)
 
         
@@ -182,15 +196,14 @@ class Darwin():
 
             nda_Scores,\
             nda_BodyLengths = self.runCurrentGeneration(self.new_population)
-
             self.nda_bestAncestorsIndexes = np.argsort(-nda_Scores)[:self.NUM_PARENTS]
-
             nda_MaximumBodies = -np.sort(-nda_BodyLengths)[:self.NUM_PARENTS]
-
             if self.generation == self.GENERATIONS+1: 
                 break
+            current_time = datetime.now().strftime("%H:%M:%S")
 
             statisticsMonitor = "-------------------------------------------------\n"   + \
+            "Current Time:%s\n"                     %                 str(current_time) + \
             "Cluster: %s\n"                         %                      str(self.ID) + \
             "Generation: %s\n"                      %              str(self.generation) + \
             "Best body_length of generation: %s\n"  %         str(nda_MaximumBodies[0]) + \
@@ -210,7 +223,7 @@ class Darwin():
                                                     nda_BodyLengths.mean())
               self.arq.write(csvLine)
             if nda_MaximumBodies[0] > self.saveDnaThreshold:
-              self.returnOverallBest()
+              self.returnOverallBest(nda_MaximumBodies[0])
 
             # Generate new offspring
             nda_BestParents = np.array([self.new_population[x]\
@@ -236,13 +249,13 @@ class Darwin():
 
         
 
-    def returnOverallBest(self):
+    def returnOverallBest(self,maximumBody = ""):
         bestIndexes = self.nda_bestAncestorsIndexes
         best = np.zeros((self.NUM_PARENTS,self.total_weights))
         for i,bestIndex in enumerate(bestIndexes):
             best[i] = self.new_population[bestIndex]
         print("Saving Weights")
-        np.save(self.folder + self.infoHeader + "-" + str(self.dnasSaved) + '.npy' , best)
+        np.save(self.folder + self.infoHeader + "-" + str(self.dnasSaved) + "-" + str(maximumBody) + '.npy' , best)
         self.dnasSaved += 1
 
 
