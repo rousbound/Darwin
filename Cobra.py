@@ -171,35 +171,37 @@ class Game():
   def isDirectionBlocked(self, direction):
     adjacentStep = self.s.body[0] + direction
     if adjacentStep in self.s.body:
-      return 1
+      bodyBlock = 1
     else:
-      if adjacentStep.x > WIDTH-BLOCK_SIZE:
-        return 1
-      if adjacentStep.x < 0:
-        return 1
-      if adjacentStep.y > WIDTH-BLOCK_SIZE:
-        return 1
-      if adjacentStep.y < 0:
-        return 1
-      return 0
+      bodyBlock = 0
+    if adjacentStep.x > WIDTH-BLOCK_SIZE or \
+      adjacentStep.x < 0                 or \
+      adjacentStep.y > WIDTH-BLOCK_SIZE  or \
+      adjacentStep.y < 0:
+      wallBlock = 1
+    else:
+      wallBlock = 0
+      
+    return bodyBlock, wallBlock
 
      
 
   def blockedDirections(self):
-    ub = self.isDirectionBlocked(vec(0,-BLOCK_SIZE))
-    lb = self.isDirectionBlocked(vec(-BLOCK_SIZE,0))
-    rb = self.isDirectionBlocked(vec(BLOCK_SIZE,0))
-    db = self.isDirectionBlocked(vec(0,BLOCK_SIZE))
-    ub2 = self.isDirectionBlocked(vec(0,-2*BLOCK_SIZE))
-    lb2 = self.isDirectionBlocked(vec(-2*BLOCK_SIZE,0))
-    rb2 = self.isDirectionBlocked(vec(2*BLOCK_SIZE,0))
-    db2 = self.isDirectionBlocked(vec(0,2*BLOCK_SIZE))
-    return ub,lb,rb,db,ub2,lb2,rb2,db2
+    ubb,uwb = self.isDirectionBlocked(vec(0,-BLOCK_SIZE))
+    lbb,lwb = self.isDirectionBlocked(vec(-BLOCK_SIZE,0))
+    rbb,rwb = self.isDirectionBlocked(vec(BLOCK_SIZE,0))
+    dbb,dwb = self.isDirectionBlocked(vec(0,BLOCK_SIZE))
+    ubb2,uwb2 = self.isDirectionBlocked(vec(0,-2*BLOCK_SIZE))
+    lbb2,lwb2 = self.isDirectionBlocked(vec(-2*BLOCK_SIZE,0))
+    rbb2,rwb2 = self.isDirectionBlocked(vec(2*BLOCK_SIZE,0))
+    dbb2,dwb2 = self.isDirectionBlocked(vec(0,2*BLOCK_SIZE))
+    return uwb,lwb,rwb,dwb,uwb2,lwb2,rwb2,dwb2,\
+           ubb,lbb,rbb,dbb,ubb2,lbb2,rbb2,dbb2,
 
   def handle_network_inputs(self):
     inputs = [ [0] for x in range(self.SIZES[0])]
-    ub, lb, rb, db, \
-    ub2, lb2, rb2, db2 = self.blockedDirections()
+    uwb, lwb, rwb, dwb, uwb2, lwb2, rwb2, dwb2, \
+    ubb, lbb, rbb, dbb, ubb2, lbb2, rbb2, dbb2 = self.blockedDirections()
 
     apple_angle = self.normalizeVector\
                           (np.array(self.snack.pos) - \
@@ -209,18 +211,26 @@ class Game():
                           ((self.s.vel.x , self.s.vel.y))
     
 
-    inputs[0] = [ub]
-    inputs[1] = [lb]
-    inputs[2] = [rb]
-    inputs[3] = [db]
-    inputs[4] = [ub2]
-    inputs[5] = [lb2]
-    inputs[6] = [rb2]
-    inputs[7] = [db2]
-    inputs[8] = [apple_angle[0]]
-    inputs[9] = [apple_angle[1]]
-    inputs[10] = [snake_dir_angle[0]]
-    inputs[11] = [snake_dir_angle[1]]
+    inputs[0] = [uwb]
+    inputs[1] = [lwb]
+    inputs[2] = [rwb]
+    inputs[3] = [dwb]
+    inputs[4] = [uwb2]
+    inputs[5] = [lwb2]
+    inputs[6] = [rwb2]
+    inputs[7] = [dwb2]
+    inputs[8] = [ubb]
+    inputs[9] = [lbb]
+    inputs[10] = [rbb]
+    inputs[11] = [dbb]
+    inputs[12] = [ubb2]
+    inputs[13] = [lbb2]
+    inputs[14] = [rbb2]
+    inputs[15] = [dbb2]
+    inputs[16] = [apple_angle[0]]
+    inputs[17] = [apple_angle[1]]
+    inputs[18] = [snake_dir_angle[0]]
+    inputs[19] = [snake_dir_angle[1]]
     output = self.network.feedforward(inputs)
     return np.argmax(output)
 
@@ -230,9 +240,16 @@ class Game():
               1500/len(self.s.body)
     return score, len(self.s.body)
 
+  def youWon(self):
+    score = len(self.s.body)*5000
+    print("You Won!")
+    return score, len(self.s.body)
 
   def main(self):
     while True:
+      print("LENGTH:",len(self.s.body))
+      if len(self.s.body) >= 220:
+        return self.youWon()
       if self.TICK:
         self.clock.tick(self.TICK)
       self.s.update(self,self.snack)

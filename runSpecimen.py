@@ -8,5 +8,5 @@ print("saving out:",best)
 print(best.shape)
 for n,i in enumerate(best):
     print("specimen %d"%n)
-    g = Game([12,13,19,4],weights=i,tick=int(speed),draw=True)
+    g = Game([20,21,27,4],weights=i,tick=int(speed),draw=True)
     print(g.main())

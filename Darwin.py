@@ -220,8 +220,9 @@ class Darwin():
                                                     nda_MaximumBodies[0],\
                                                     nda_BodyLengths.mean())
               self.arq.write(csvLine)
-            if nda_MaximumBodies[0] > self.saveDnaThreshold:
-              self.returnOverallBest(nda_MaximumBodies[0])
+            if self.saveDnaThreshold:
+              if nda_MaximumBodies[0] > self.saveDnaThreshold:
+                self.returnOverallBest(nda_MaximumBodies[0])
 
             # Generate new offspring
             nda_BestParents = np.array([self.new_population[x]\

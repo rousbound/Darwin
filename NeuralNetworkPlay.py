@@ -19,16 +19,16 @@ Main build:
 
 if __name__ == "__main__":
   from Darwin import Darwin
-  darwin = Darwin(offspring_num = 100,
-                    generations = 500,
-                    sizes=[12,13,19,4],
-                    num_parents = 12,
-                    mutation_rate = 6,
+  darwin = Darwin(offspring_num = 1000,
+                    generations = 50,
+                    sizes=[20,21,27,4],
+                    num_parents = 64,
+                    mutation_rate = 7,
                     crossing_algorithm = "uniform",
                     saving_txt = True,
                     saving_csv = True,
                     saving_dna = True,
-                    saveDnaThreshold = 85,
+                    saveDnaThreshold = None,
 
 
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
                                              #  useful when dealing with threads.
 
 
-                    loadDnaPath = False) #Load parents from another training
+                    loadDnaPath = "GenTests/Gen test - 2020-01-06 - 14:19:33-Darwin 1-2-109.0.npy") #Load parents from another training
 
   darwin.main()
   
