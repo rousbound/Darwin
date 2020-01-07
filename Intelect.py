@@ -22,7 +22,10 @@ class Network(object):
         else:
             self.weights = np.random.rand(self.get_total_weights())
 
-        self.synapsesOfEachNeuron = self.decode_weights()
+        self.synapsesOfEachNeuron = self.decode_weights2()
+        #print("new:",len(self.synapsesOfEachNeuron))
+        self.synapsesOfEachNeuron2 = self.decode_weights()
+        #print("old:",len(self.synapsesOfEachNeuron))
 
 
     def get_total_weights(self):
@@ -31,14 +34,30 @@ class Network(object):
 
     def decode_weights(self):
         self.synapsesOfEachLayer = [x[0]*x[1] for x in self.sizePairs]
+        self.synapsesLayersWeights = []
+
+        for x in self.synapsesOfEachLayer:
+            length = len(self.synapsesLayersWeights)
+            self.synapsesLayersWeights.append\
+                                      (self.weights[length:length+x])
+
+        neuronsSynapses = []
+        for x,y in zip(self.synapsesLayersWeights,self.sizePairs):
+            a = x.reshape(y[0],y[1])
+            neuronsSynapses.append(a)
+        return neuronsSynapses
+
+    def decode_weights2(self):
+        self.synapsesOfEachLayer = [x[0]*x[1] for x in self.sizePairs]
+        print(self.synapsesOfEachLayer)
         synapsesOfEachNeuron = []
         pointer = 0
         for synapsesOfLayer, sizePair in zip(self.synapsesOfEachLayer, self.sizePairs):
-          synapsesOfEachNeuron.append                               \
-            (self.weights[pointer : synapsesOfLayer + pointer].     \
-              reshape(sizePair[0],sizePair[1]))
-
+          layerWeights = self.weights[pointer : pointer + synapsesOfLayer]
+          a = layerWeights.reshape(sizePair[0],sizePair[1])
+          synapsesOfEachNeuron.append(a)
           pointer += synapsesOfLayer
+          print(pointer)
             
         return synapsesOfEachNeuron
 
