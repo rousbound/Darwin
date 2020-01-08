@@ -3,13 +3,12 @@ import numpy as np
 
 class Network(object):
 
-    # Resume of transformations
+    # Variables dictionary
     # sizes = [8,9,15,3]
     # total_weight = 252 ( 8*9 + 9*15 + 15 * 3)
     # sizePairs = [[9,8],[15,9],[3,15]]
-    # synapsesLayersCount = [72,125,45]
-    # synapsesLayersWeights = [72weights,125weights,45weights]
-    # neuronsSynapses = [[9,8weights],[15,9weights],[3,15weights]]
+    # synapsesOfEachLayer = [72,125,45]
+    # synapsesOfEachNeuron = [[9,8weights],[15,9weights],[3,15weights]]
 
   
     def __init__(self, sizes,weights = None,from_array = None):
@@ -21,37 +20,31 @@ class Network(object):
             self.weights = weights
         else:
             self.weights = np.random.rand(self.get_total_weights())
-        self.neuronsSynapses = self.decode_weights()
+
+        self.synapsesOfEachNeuron = self.decode_weights()
 
 
     def get_total_weights(self):
-        self.mult = [[x*y] for (x,y) in zip(self.sizes[1:],self.sizes[:-1])]
-        self.total = 0
-        for mulResult in self.mult:
-            self.total += mulResult[0]
-        return self.total
+        self.mult = [x*y for (x,y) in zip(self.sizes[1:],self.sizes[:-1])]
+        return sum(self.mult)
 
     def decode_weights(self):
-        self.synapsesLayersCount = [x[0]*x[1] for x in self.sizePairs]
-        self.synapsesLayersWeights = []
-
-        for x in self.synapsesLayersCount:
-            length = len(self.synapsesLayersWeights)
-            self.synapsesLayersWeights.append\
-                                      (self.weights[length:length+x])
-        
-        neuronsSynapses = []
-        for x,y in zip(self.synapsesLayersWeights,self.sizePairs):
-            a = x.reshape(y[0],y[1])
-            neuronsSynapses.append(a)
-        return neuronsSynapses
-
+        self.synapsesOfEachLayer = [x[0]*x[1] for x in self.sizePairs]
+        synapsesOfEachNeuron = []
+        pointer = 0
+        for synapsesOfLayer, sizePair in zip(self.synapsesOfEachLayer, self.sizePairs):
+          layerWeights = self.weights[pointer : pointer + synapsesOfLayer]
+          layerWeights = layerWeights.reshape(sizePair[0],sizePair[1])
+          synapsesOfEachNeuron.append(layerWeights)
+          pointer += synapsesOfLayer
+            
+        return synapsesOfEachNeuron
 
     def feedforward(self, a):
         # Feedforward except in the final layer
-        for w in self.neuronsSynapses[:-1]:
+        for w in self.synapsesOfEachNeuron[:-1]:
             a = np.tanh(np.matmul(w,a))
-        w = self.neuronsSynapses[-1]
+        w = self.synapsesOfEachNeuron[-1]
         z = np.matmul(w,a)
         a = softmax(z)
         return a

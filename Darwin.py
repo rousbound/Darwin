@@ -2,23 +2,16 @@ from Cobra import *
 from datetime import datetime,date
 import random
 import pygame as pg
-import atexit
 
-# Standa_rd build
-# OFFSPRING_NUM = 2000
-# GENERATIONS = 200
-# SIZES = [8,9,15,4]
-# NUM_PARENTS = 100
-# MUTATION_RATE = 25
 
 class Darwin():
     def __init__(self,  
-                  offspring_num = 2000,
-                  generations = 200,
-                  sizes=[8,9,15,4], 
-                  num_parents = 1000,
-                  mutation_rate = 25,
-                  crossing_algorithm = "uniform",
+                  offspring_num,
+                  generations,
+                  sizes, 
+                  num_parents,
+                  mutation_rate,
+                  crossing_algorithm,
                   cluster_id = "",
                   saving_csv = False,
                   saving_txt = False,
@@ -75,11 +68,8 @@ class Darwin():
 
 
     def get_total_weights(self):
-        self.mult = [[x*y] for (x,y) in zip(self.SIZES[1:],self.SIZES[:-1])]
-        self.total = 0
-        for mulResult in self.mult:
-            self.total += mulResult[0]
-        return self.total
+        self.mult = [x*y for (x,y) in zip(self.SIZES[1:],self.SIZES[:-1])]
+        return sum(self.mult)
 
     def runCurrentGeneration(self,population):
 
