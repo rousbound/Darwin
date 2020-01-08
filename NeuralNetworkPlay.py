@@ -25,9 +25,9 @@ if __name__ == "__main__":
 
     # Hyperparameters
     offspring_num = 100,
-    generations = 50,
+    generations = 500,
     sizes=[20,21,27,4],
-    num_parents = 64,
+    num_parents = 12,
     mutation_rate = 7,
     crossing_algorithm = "uniform",
 
