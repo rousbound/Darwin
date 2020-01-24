@@ -2,6 +2,7 @@ import pygame
 import sys
 import random
 import numpy as np
+sys.path.append("../Nature")
 from Intelect import *
 from NeuralNetworkPlay import *
 
@@ -96,6 +97,7 @@ class Food():
     self.color = (0,255,0)
 
   def spawn(self,snake):
+    limit = 0
     while True:
       x = random.randint(0,(ROWS-1))*BLOCK_SIZE
       y = random.randint(0,(COLS-1))*BLOCK_SIZE
@@ -103,6 +105,10 @@ class Food():
         continue
       else:
         break
+      limit += 1
+      if limit > 2000:
+        self.youWon()
+
     self.pos = vec(x,y)      
 
       
@@ -116,11 +122,18 @@ class Food():
     
 
 class Game():
-  def __init__(self,sizes = None, weights = None, tick = None, draw = False, keyboard = False):
-    self.KEYBOARD = keyboard
+  def __init__(self,sizes = None, weights = None, gameArgs = None):
 
-    self.TICK = tick 
-    self.DRAW = draw
+    if gameArgs:
+        self.KEYBOARD = gameArgs.get('keyboard')
+        self.TICK = gameArgs.get('tick')
+        self.DRAW = gameArgs.get('draw')
+    else:
+        self.KEYBOARD = None
+        self.TICK = None
+        self.DRAW = None
+
+        
     self.SIZES = sizes
 
     if self.DRAW:
@@ -247,7 +260,7 @@ class Game():
 
   def main(self):
     while True:
-      if len(self.s.body) >= 100:
+      if len(self.s.body) >= 150:
         return self.youWon()
       if self.TICK:
         self.clock.tick(self.TICK)

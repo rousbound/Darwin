@@ -1,10 +1,10 @@
-from Cobra import *
 from datetime import datetime,date
+import numpy as np
 import random
 import pygame as pg
 
 
-class Darwin():
+class Evolution():
     def __init__(self,  
                   offspring_num,
                   generations,
@@ -18,8 +18,12 @@ class Darwin():
                   saving_dna = False,
                   saveDnaThreshold = 90,
                   tty = None,
-                  loadDnaPath = None):
+                  loadDnaPath = None,
+                  game = None,
+                  gameArgs = None):
 
+        self.game = game
+        self.gameArgs = gameArgs
         self.TTY = tty 
         self.ID = cluster_id
         self.OFFSPRING_NUM = offspring_num  
@@ -73,21 +77,22 @@ class Darwin():
 
     def runCurrentGeneration(self,population):
 
+        fitnesses = np.empty(self.OFFSPRING_NUM)
         scores = np.empty(self.OFFSPRING_NUM)
-        bodies = np.empty(self.OFFSPRING_NUM)
         
 
         for i,weight in enumerate(self.nda_newPopulation):
 
-            snakeLifeSpan              =               Game\
+            snakeLifeSpan              =               self.game\
                                (sizes  = self.SIZES,
-                               weights = weight) 
+                               weights = weight,
+                               gameArgs = self.gameArgs) 
 
-            score, body = snakeLifeSpan.main()
+            fitness, score = snakeLifeSpan.main()
+            fitnesses[i] = fitness
             scores[i] = score
-            bodies[i] = body
 
-        return scores, bodies
+        return fitnesses, scores
 
     def uniformCrossover(self,parents,OFFSPRING_NUM):
         new_offspring = np.empty((OFFSPRING_NUM,parents.shape[1]))
@@ -197,7 +202,7 @@ class Darwin():
             "Current Time:%s\n"                     %                 str(current_time) + \
             "Cluster: %s\n"                         %                      str(self.ID) + \
             "Generation: %s\n"                      %              str(self.generation) + \
-            "Best body_length of generation: %s\n"  %         str(nda_MaximumBodies[0]) + \
+            "Best body_lengths of generation: %s\n"  %         str(nda_MaximumBodies) + \
             "Mean body_length of generation: %f\n"  %            nda_BodyLengths.mean() + \
             "-----------------------------------------------------------------------\n"
 

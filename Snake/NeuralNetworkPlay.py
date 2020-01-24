@@ -18,9 +18,13 @@ Main build:
 """
 
 if __name__ == "__main__":
-  from Darwin import Darwin
+  import sys
+  sys.path.append("../Nature")
+  from Darwin import Evolution
+  from Cobra import *
+
                     
-  darwin = Darwin( 
+  evolve = Evolution( 
 
 
     # Hyperparameters
@@ -44,9 +48,10 @@ if __name__ == "__main__":
     tty = None,              
 
     #Load parents from another training
-    loadDnaPath = "") 
+    loadDnaPath = "",
+    game = Game) 
 
-  darwin.main()
+  evolve.main()
   
 
 
