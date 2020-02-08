@@ -16,7 +16,7 @@ if __name__ == "__main__":
   evolve = Evolution( 
     offspring_num = 1000,
     generations = 500,
-    sizes=[13,12,17,4],
+    sizes=[13,12,17,2],
     num_parents = 32,
     mutation_rate = 7,
     crossing_algorithm = "uniform",

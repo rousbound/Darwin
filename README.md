@@ -24,7 +24,7 @@ Para rodar um exemplo já treinado é necessário rodar o seguinte comando, pass
 $ python3 runSpecimen 'BestDNA/Gen test - 2020-01-23 - 17:47:12--61-201.0.npy'
 ```
 
-## Treinando sua própria espécia
+## Treinando sua própria espécie
 
 A maneira canônica de usar o framework é a seguinte:
 

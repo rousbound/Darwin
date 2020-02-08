@@ -1,0 +1,5 @@
+Generations: 500
+Sizes: [13, 12, 17, 2]
+Offspring Count: 1000
+Number of Parents: 32
+Mutation rate: 7

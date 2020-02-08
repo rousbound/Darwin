@@ -79,8 +79,8 @@ class Player():
       pass
     elif controls == 1:
         self.jump()
-    elif controls == 2:
+    """elif controls == 2:
         self.dive()
     elif controls == 3:
-        self.strife()
+        self.strife()"""
     
